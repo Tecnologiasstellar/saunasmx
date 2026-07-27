@@ -1,0 +1,29 @@
+version: 1
+review_policy: manual
+distribution:
+  mode: curated
+  max_providers: 2
+eligibility:
+  required:
+    - provider_marketplace_status_approved
+    - service_matches_project_type
+    - territory_matches_location
+    - project_budget_meets_provider_minimum
+    - provider_capacity_available
+# Which questionnaire answers supply the matching dimensions.
+answer_mapping:
+  service: type
+  budget: budget
+scoring:
+  geography: 25
+  specialization: 25
+  budget_fit: 15
+  response_performance: 15
+  consumer_rating: 10
+  capacity: 10
+tie_breakers:
+  - response_performance_desc
+  - assignment_load_asc
+  - provider_id_asc
+explanations_required: true
+ai_role: attribute_extraction_and_summary_only

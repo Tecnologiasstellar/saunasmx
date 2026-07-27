@@ -1,0 +1,34 @@
+{
+  "name": "marketplace-os-foundation",
+  "version": "0.1.0",
+  "purpose": "AI-executable foundation for a reusable multi-marketplace lead generation platform",
+  "primaryMarketplace": "suanas-mx",
+  "referenceAgent": "Claude Fable 5",
+  "architecture": "configuration-driven modular monolith",
+  "sourceOfTruth": "README.md, CLAUDE.md, and docs/",
+  "configurationExamples": [
+    "config/marketplaces/suanas-mx/",
+    "config/marketplaces/pergolas-mx/"
+  ],
+  "phases": [
+    "specification lock",
+    "platform foundation",
+    "demand engine",
+    "supply and matching",
+    "provider workflow",
+    "commercial engine",
+    "intelligence and automation",
+    "category launch system",
+    "production readiness"
+  ],
+  "lockedDecisions": [
+    "modular monolith",
+    "PostgreSQL transactional source of truth",
+    "projects and leads are separate",
+    "outbox for external side effects",
+    "deterministic eligibility before AI",
+    "versioned marketplace configuration",
+    "CMS owns editorial content, not transactions",
+    "initial manual review and maximum two provider assignments"
+  ]
+}

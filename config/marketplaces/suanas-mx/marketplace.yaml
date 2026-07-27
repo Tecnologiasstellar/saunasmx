@@ -1,0 +1,29 @@
+id: suanas-mx
+slug: suanas-mx
+name: Saunas México
+domain: saunas.mx
+# Hostnames that permanently redirect to the canonical domain. Add a corrected
+# spelling here if the canonical domain ever changes — no code change needed.
+aliases:
+  - suanas.mx
+  - www.suanas.mx
+  - www.saunas.mx
+category: sauna
+localization:
+  locale: es-MX
+  currency: MXN
+  country: MX
+theme: warm-wellness
+questionnaire: ./questionnaire.json
+matching: ./matching.yaml
+features:
+  providerProfiles: true
+  providerPortal: true
+  manualLeadReview: true
+  whatsapp: false
+  subscriptions: false
+  successFees: false
+seo:
+  defaultIndexing: true
+  pageEligibility: provider_count_gte_2_and_local_value
+  primaryCta: obtener-cotizaciones

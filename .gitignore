@@ -1,0 +1,25 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.turbo/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Local database
+.pgdata/
+*.db
+
+# Test artifacts
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+.DS_Store
+*.log
+tsconfig.tsbuildinfo

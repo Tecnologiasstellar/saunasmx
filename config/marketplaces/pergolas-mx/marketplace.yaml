@@ -1,0 +1,24 @@
+id: pergolas-mx
+slug: pergolas-mx
+name: Pérgolas México
+domain: pergolas.example.mx
+aliases: []
+category: pergola
+localization:
+  locale: es-MX
+  currency: MXN
+  country: MX
+theme: outdoor-living
+questionnaire: ./questionnaire.json
+matching: ./matching.yaml
+features:
+  providerProfiles: true
+  providerPortal: true
+  manualLeadReview: true
+  whatsapp: false
+  subscriptions: false
+  successFees: false
+seo:
+  defaultIndexing: false
+  pageEligibility: provider_count_gte_2_and_local_value
+  primaryCta: obtener-cotizaciones

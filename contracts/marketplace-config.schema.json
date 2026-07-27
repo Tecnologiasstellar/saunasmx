@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://marketplace-os.local/schemas/marketplace-config.schema.json",
+  "title": "marketplace.yaml",
+  "description": "Authored per marketplace under config/marketplaces/<slug>/. The executable source of truth is src/modules/marketplace-config/schema.ts; this document mirrors it for external consumers.",
+  "type": "object",
+  "required": [
+    "id",
+    "slug",
+    "name",
+    "domain",
+    "category",
+    "localization",
+    "theme",
+    "questionnaire",
+    "matching",
+    "features",
+    "seo"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Must equal the containing directory name."},
+    "name": {"type": "string", "minLength": 1},
+    "domain": {"type": "string", "description": "Canonical bare hostname, no protocol or path. May carry an explicit port for local development."},
+    "aliases": {"type": "array", "items": {"type": "string"}, "default": [], "description": "Hostnames that redirect to the canonical domain. Must not repeat the canonical domain, and must be unique across all marketplaces."},
+    "category": {"type": "string", "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$"},
+    "localization": {
+      "type": "object",
+      "required": ["locale", "currency", "country"],
+      "properties": {
+        "locale": {"type": "string"},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "country": {"type": "string", "pattern": "^[A-Z]{2}$"}
+      },
+      "additionalProperties": false
+    },
+    "theme": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Key into the shared theme token table."},
+    "questionnaire": {"type": "string", "description": "Path to the questionnaire JSON, relative to this file."},
+    "matching": {"type": "string", "description": "Path to the matching YAML, relative to this file."},
+    "features": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"}
+    },
+    "seo": {
+      "type": "object",
+      "required": ["defaultIndexing", "pageEligibility", "primaryCta"],
+      "properties": {
+        "defaultIndexing": {"type": "boolean", "description": "Whether public pages are indexable in production. Never indexable outside production."},
+        "pageEligibility": {"type": "string"},
+        "primaryCta": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
