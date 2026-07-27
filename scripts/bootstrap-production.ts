@@ -1,16 +1,20 @@
 #!/usr/bin/env tsx
 /**
- * One-time production bootstrap: publishes the on-disk marketplace configs
- * into the database and creates the first real operator account.
+ * One-time production bootstrap: publishes the on-disk marketplace configs and
+ * the landing page copy into the database, and creates the first real operator
+ * account.
  *
  * Unlike scripts/seed.ts, this never inserts synthetic fixtures (no fake
  * providers, no example.com accounts) — it only does what a real production
- * database needs before it can accept a real project. Safe to re-run.
+ * database needs before it can accept a real project. Safe to re-run: the
+ * landing page is insert-only, so an operator's later edits are never
+ * overwritten.
  *
  * Usage:
  *   npm run bootstrap:production -- --operator-email=you@example.com [--operator-name="Your Name"]
  */
 import { eq } from 'drizzle-orm';
+import { publishLandingPage } from '../src/modules/content/landing-copy';
 import { getDb } from '../src/modules/database/client';
 import { appUser, userRole } from '../src/modules/database/schema';
 import { loadMarketplaceConfigs } from '../src/modules/marketplace-config/loader';
@@ -40,6 +44,14 @@ const db = await getDb();
 const configs = loadMarketplaceConfigs();
 const marketplaceIds = await publishMarketplaceConfigs(db, configs);
 console.log(`Published ${marketplaceIds.size} marketplace config(s): ${[...marketplaceIds.keys()].join(', ')}`);
+
+// Without this the public homepage falls back to the marketplace name and the
+// header's in-page anchor points at a section that was never published.
+for (const [slug, marketplaceId] of marketplaceIds) {
+  const result = await publishLandingPage(db, slug, marketplaceId);
+  if (result === 'created') console.log(`Published landing page for ${slug}.`);
+  else if (result === 'already-present') console.log(`Landing page for ${slug} already exists — left unchanged.`);
+}
 
 const existingUser = await db.select({ id: appUser.id }).from(appUser).where(eq(appUser.email, operatorEmail)).limit(1);
 const userId =
