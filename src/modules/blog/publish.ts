@@ -32,20 +32,45 @@ const LOCATION_CODE = 2484; // Mexico
 const LANGUAGE_CODE = 'es';
 const LOCALE = 'es-MX';
 
-/** Seeds the keyword hunt. Rotates daily so consecutive posts aren't near-duplicates. */
+/**
+ * Seeds the keyword hunt, rotating daily so consecutive posts aren't near
+ * duplicates. These must be short head terms: keyword_suggestions expands a
+ * phrase, so seeding it with a long-tail phrase returns nothing to expand.
+ */
 const SEED_KEYWORDS = [
-  'protocolo terapia de contraste',
-  'baño de hielo inflamación',
-  'rutina sauna y baño de hielo',
-  'inmersión en agua fría recuperación',
-  'beneficios sauna infrarrojo',
-  'baños de contraste fisioterapia',
-  'temperatura baño de hielo',
+  'baño de hielo',
+  'terapia de contraste',
+  'sauna infrarrojo',
+  'crioterapia',
+  'inmersión en agua fría',
+  'baño de vapor',
+  'sauna en casa',
 ];
 
 /** Keywords above this difficulty aren't winnable by a new site. */
 const MAX_KEYWORD_DIFFICULTY = 35;
-const MIN_SEARCH_VOLUME = 50; // Spanish volumes run lower than English
+/**
+ * Mexican Spanish volumes in this niche are small — "baño de hielo" itself is
+ * only ~480/mo — so a floor tuned for English throws away the entire long tail.
+ */
+const MIN_SEARCH_VOLUME = 20;
+
+/**
+ * "baño" means bathroom as often as bath, and "hielo" pulls in dry ice. Without
+ * this guard the highest-volume match for "baño de hielo inflamación" is "taza
+ * de baño" (toilet bowl, 74k/mo) and the agent writes about plumbing.
+ */
+const OFF_TOPIC = [
+  'taza', 'traje', 'mueble', 'azulejo', 'espejo', 'regadera', 'tina para',
+  // "hielo seco" is dry ice, but "sauna seco" is ours — match the phrase, not the word.
+  'laboratorio', 'quemadura', 'hielo seco', 'pdf', 'costco', 'descargar', 'precio de',
+];
+
+/** A keyword must contain at least one of these to be ours. */
+const ON_TOPIC = [
+  'sauna', 'hielo', 'fri', 'contraste', 'crioterapia', 'plunge',
+  'temazcal', 'vapor', 'recuperacion', 'inmersion', 'termoterapia',
+];
 const SERP_DEPTH = 10;
 const INTERNAL_LINK_POOL = 5;
 const TARGET_WORDS = 1500;
@@ -61,6 +86,11 @@ function optional(name: string): string | null {
 /** Deterministic seed rotation: same day → same seed, so a retry doesn't drift. */
 function seedForDay(now: Date): string {
   return SEED_KEYWORDS[Math.floor(now.getTime() / 86_400_000) % SEED_KEYWORDS.length]!;
+}
+
+/** Lowercase, accent-free, for substring matching. "frío" and "frio" must agree. */
+function fold(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 /** Accents are stripped so "baño de hielo" → "bano-de-hielo" and the URL stays ASCII. */
@@ -108,21 +138,28 @@ async function dataForSeo<T>(path: string, body: unknown): Promise<T | null> {
   return payload as T;
 }
 
+/** Shares a word with a seed but not its intent — see OFF_TOPIC. */
+function isRelevant(keyword: string): boolean {
+  const folded = fold(keyword);
+  if (OFF_TOPIC.some((term) => folded.includes(term))) return false;
+  return ON_TOPIC.some((term) => folded.includes(term));
+}
+
 async function findKeyword(seed: string): Promise<Keyword> {
+  // keyword_suggestions matches the whole phrase; keyword_ideas matches any single
+  // word in it, which in Spanish drags in bathroom-remodelling and swimwear.
   const payload = await dataForSeo<{ tasks?: { result?: { items?: unknown[] }[] }[] }>(
-    '/dataforseo_labs/google/keyword_ideas/live',
+    '/dataforseo_labs/google/keyword_suggestions/live',
     [
       {
-        keywords: [seed],
+        keyword: seed,
         location_code: LOCATION_CODE,
         language_code: LANGUAGE_CODE,
-        limit: 200,
-        // Filter server-side — cheaper than paging through everything.
-        filters: [
-          ['keyword_info.search_volume', '>', MIN_SEARCH_VOLUME],
-          'and',
-          ['keyword_properties.keyword_difficulty', '<', MAX_KEYWORD_DIFFICULTY],
-        ],
+        limit: 100,
+        // Volume is the only safe server-side filter. Difficulty is frequently
+        // null on Spanish long-tail terms, and a server-side `<` drops nulls —
+        // which is most of the winnable inventory. Filtered below instead.
+        filters: [['keyword_info.search_volume', '>', MIN_SEARCH_VOLUME]],
         order_by: ['keyword_info.search_volume,desc'],
       },
     ],
@@ -134,9 +171,15 @@ async function findKeyword(seed: string): Promise<Keyword> {
     keyword_properties?: { keyword_difficulty?: number };
   }>;
 
-  const best = items.find((item) => item.keyword);
+  const best = items
+    .filter((item) => item.keyword && isRelevant(item.keyword))
+    // Null difficulty means "not enough data to score", which for a term this
+    // obscure reads as low competition. Treat it as winnable rather than drop it.
+    .filter((item) => (item.keyword_properties?.keyword_difficulty ?? 0) < MAX_KEYWORD_DIFFICULTY)
+    .sort((a, b) => (b.keyword_info?.search_volume ?? 0) - (a.keyword_info?.search_volume ?? 0))[0];
+
   if (!best?.keyword) {
-    console.warn(`No keyword ideas returned. Falling back to the seed: "${seed}"`);
+    console.warn(`No usable keyword after filtering ${items.length} suggestion(s). Using the seed: "${seed}"`);
     return { keyword: seed, volume: 0, difficulty: 0 };
   }
 
@@ -169,21 +212,65 @@ async function fetchSerp(keyword: string): Promise<SerpResult[]> {
 /* 3. Mine exact temperature and timing metrics                               */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Pulls concrete figures out of the SERP text so the article cites real numbers
- * rather than inventing them. Deliberately a regex and not an LLM call: the
- * whole point is that these values are *not* generated.
- */
-export function mineMetrics(results: SerpResult[]): string[] {
-  const TEMPERATURE = /\b\d{1,3}(?:[.,]\d)?\s?(?:°\s?[CF]|grados?\s?(?:centígrados?|celsius)?\b)/gi;
-  const DURATION = /\b\d{1,3}(?:\s?[-–a]\s?\d{1,3})?\s?(?:minutos?|min\b|segundos?|seg\b|horas?|hrs?\b)/gi;
+const TEMPERATURE = /\b\d{1,3}(?:[.,]\d)?\s?(?:°\s?[CF]\b|grados?\b)/gi;
+const DURATION = /\b\d{1,3}(?:\s?[-–a]\s?\d{1,3})?\s?(?:minutos?|min\b|segundos?|seg\b|horas?|hrs?\b)/gi;
 
+/** How many top-ranking pages to read. Beyond ~5 the yield drops and the wait grows. */
+const PAGES_TO_MINE = 5;
+const PAGE_TIMEOUT_MS = 8_000;
+const MAX_PAGE_BYTES = 400_000;
+
+function figuresIn(text: string): string[] {
+  return [...(text.match(TEMPERATURE) ?? []), ...(text.match(DURATION) ?? [])].map((m) => m.trim());
+}
+
+/**
+ * Reads the top-ranking pages and extracts their temperature and duration
+ * figures, so the article can cite real numbers instead of inventing them.
+ *
+ * Deliberately a regex and not an LLM call: the whole point is that these values
+ * are *not* generated. Deliberately the page body and not the SERP snippet:
+ * Google truncates descriptions to ~155 characters of prose, which in practice
+ * contain no figures at all — mining snippets alone always returned zero.
+ *
+ * Each figure is tagged with its source host. Sources are a mix of Spanish and
+ * US sites, so a bare "69 grados" may be Fahrenheit; the host lets the model
+ * judge, and the system prompt requires conversion to Celsius.
+ */
+export async function mineMetrics(results: SerpResult[]): Promise<string[]> {
   const found = new Set<string>();
+
+  // Snippets rarely carry figures, but they are already paid for.
   for (const result of results) {
-    const text = `${result.title} ${result.description}`;
-    for (const match of text.match(TEMPERATURE) ?? []) found.add(match.trim());
-    for (const match of text.match(DURATION) ?? []) found.add(match.trim());
+    for (const figure of figuresIn(`${result.title} ${result.description}`)) found.add(figure);
   }
+
+  const pages = results.filter((result) => result.url).slice(0, PAGES_TO_MINE);
+
+  await Promise.all(
+    pages.map(async (page) => {
+      try {
+        const response = await fetch(page.url, {
+          signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+          headers: { 'user-agent': 'Mozilla/5.0 (compatible; saunas.mx-research/1.0)' },
+        });
+        if (!response.ok) return;
+
+        const html = (await response.text()).slice(0, MAX_PAGE_BYTES);
+        const text = html
+          .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ');
+
+        const host = new URL(page.url).hostname.replace(/^www\./, '');
+        for (const figure of figuresIn(text)) found.add(`${figure} (${host})`);
+      } catch {
+        // A blocked, slow, or malformed page is normal. Skip it; the other four
+        // still yield figures, and an empty set only costs factual density.
+      }
+    }),
+  );
+
   return [...found];
 }
 
@@ -447,7 +534,7 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
 
   // Independent calls — no reason to serialize them.
   const [serp, priorPosts] = await Promise.all([fetchSerp(keyword.keyword), recentPosts()]);
-  const metrics = mineMetrics(serp);
+  const metrics = await mineMetrics(serp);
   console.log(`SERP: ${serp.length} · metrics: ${metrics.length} · link pool: ${priorPosts.length}`);
 
   const article = await writeArticle({ keyword, serp, metrics, priorPosts });
