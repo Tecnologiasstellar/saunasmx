@@ -14,7 +14,7 @@ import { processOutbox } from '@/modules/worker/outbox-worker';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+async function run(request: NextRequest) {
   const secret = process.env.WORKER_SECRET?.trim();
   if (!secret) {
     log.error('worker.secret_not_configured');
@@ -33,3 +33,7 @@ export async function POST(request: NextRequest) {
   log.info('worker.run', { ...result, expired });
   return NextResponse.json({ ...result, expiredAssignments: expired });
 }
+
+export const POST = run;
+// Vercel Cron invokes with GET and no body; same shared-secret check either way.
+export const GET = run;
