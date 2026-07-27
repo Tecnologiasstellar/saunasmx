@@ -35,11 +35,8 @@ GitHub Actions has no such cap and runs the same command an operator runs
 locally, so there is one code path to debug.
 
 `/api/blog/publish` is kept for a Vercel plan with a longer timeout (Pro allows
-300s, 800s with fluid compute) and for manual triggering. It has **no cron entry
-in `vercel.json`**: Hobby allows exactly one cron job per project, and that slot
-belongs to the outbox drain. A second entry is not inert — it fails the whole
-deployment with "your plan allows a maximum of 1 cron job". Add it back only
-together with a plan upgrade.
+300s, 800s with fluid compute) and for manual triggering. The cron entry in
+`vercel.json` is inert on Hobby — remove it if you are staying on Hobby.
 
 ## Running it
 
