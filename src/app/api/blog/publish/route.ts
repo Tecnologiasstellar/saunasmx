@@ -13,10 +13,10 @@ import { publishDailyPost } from '@/modules/blog/publish';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Writing a 1,500-word article at high effort takes minutes, not seconds. Vercel
-// caps this at the plan limit; on Hobby (60s) the run will time out — see
-// docs/blog-operations.md for the GitHub Actions alternative.
-export const maxDuration = 800;
+// A measured run is ~75s (~85s with DataForSEO), so the default 10s is far too
+// short. 300 is the ceiling Hobby accepts — a higher value fails the deploy
+// outright rather than being clamped. Raise it only alongside a plan upgrade.
+export const maxDuration = 300;
 
 async function run(request: NextRequest) {
   const secret = process.env.WORKER_SECRET?.trim();

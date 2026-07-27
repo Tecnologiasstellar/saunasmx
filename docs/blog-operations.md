@@ -29,17 +29,19 @@ returns a 500.
 
 ## Why GitHub Actions and not Vercel Cron
 
-A measured run takes **~75 seconds** (≈85s with DataForSEO). Vercel's Hobby plan
-caps a function at 60s, so a Vercel Cron would time out partway through writing.
-GitHub Actions has no such cap and runs the same command an operator runs
-locally, so there is one code path to debug.
+The reason is the **cron-job quota, not the timeout**. Hobby allows exactly one
+cron job per project, and that slot belongs to the outbox drain. A second entry
+in `vercel.json` is not inert — it fails the whole deployment with "your plan
+allows a maximum of 1 cron job". Add it back only together with a plan upgrade.
 
-`/api/blog/publish` is kept for a Vercel plan with a longer timeout (Pro allows
-300s, 800s with fluid compute) and for manual triggering. It has **no cron entry
-in `vercel.json`**: Hobby allows exactly one cron job per project, and that slot
-belongs to the outbox drain. A second entry is not inert — it fails the whole
-deployment with "your plan allows a maximum of 1 cron job". Add it back only
-together with a plan upgrade.
+Duration is not the blocker: a measured run is **~75 seconds** (≈85s with
+DataForSEO) and Hobby accepts a `maxDuration` up to **300s**, which the route
+sets. Note that ceiling is validated at build time — a larger value fails the
+deploy rather than being clamped down.
+
+GitHub Actions also keeps one code path to debug, since it runs the same command
+an operator runs locally. `/api/blog/publish` stays available for manual
+triggering and for a future plan upgrade.
 
 ## Running it
 
