@@ -11,6 +11,13 @@ localization:
 theme: outdoor-living
 questionnaire: ./questionnaire.json
 matching: ./matching.yaml
+# No blog entry: the editorial corpus is sauna-specific, so this marketplace
+# neither links to it nor serves it (features.blog below).
+nav:
+  - label: Directorio
+    href: /directorio
+  - label: Guía
+    href: /#guia
 features:
   providerProfiles: true
   providerPortal: true
@@ -18,6 +25,7 @@ features:
   whatsapp: false
   subscriptions: false
   successFees: false
+  blog: false
 seo:
   defaultIndexing: false
   pageEligibility: provider_count_gte_2_and_local_value

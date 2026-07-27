@@ -57,6 +57,9 @@ export type MatchingConfig = {
   aiRole: 'attribute_extraction_and_summary_only' | 'disabled';
 };
 
+/** A public header/footer destination this marketplace actually publishes. */
+export type NavLink = { label: string; href: string };
+
 export type MarketplaceConfig = {
   id: string;
   slug: string;
@@ -67,6 +70,7 @@ export type MarketplaceConfig = {
   category: string;
   localization: { locale: string; currency: string; country: string };
   themeKey: string;
+  nav: NavLink[];
   features: Record<string, boolean>;
   seo: { defaultIndexing: boolean; pageEligibility: string; primaryCta: string };
   questionnaire: Questionnaire;

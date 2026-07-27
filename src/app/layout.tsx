@@ -47,6 +47,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={config.localization.locale} style={themeStyle(config.themeKey)}>
+      <head>
+        {/*
+          Webfonts are requested by the browser, never by the build: `next/font`
+          would fetch Google Fonts during `next build` and turn a network blip
+          into a failed deploy. `display=swap` plus the serif/sans fallbacks in
+          the theme tokens means a blocked request costs typography, not text.
+        */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- the rule
+            targets the Pages Router's per-page <Head>; this is the App Router
+            root layout, so the stylesheet is added once for the whole app. */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

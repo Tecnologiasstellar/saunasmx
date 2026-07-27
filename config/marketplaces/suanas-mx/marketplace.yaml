@@ -16,6 +16,15 @@ localization:
 theme: warm-wellness
 questionnaire: ./questionnaire.json
 matching: ./matching.yaml
+# Public header and footer links. Only destinations this marketplace actually
+# publishes — the shared chrome renders exactly what is listed here.
+nav:
+  - label: Directorio
+    href: /directorio
+  - label: Ciencia
+    href: /#ciencia
+  - label: Blog
+    href: /blog
 features:
   providerProfiles: true
   providerPortal: true
@@ -23,6 +32,7 @@ features:
   whatsapp: false
   subscriptions: false
   successFees: false
+  blog: true
 seo:
   defaultIndexing: true
   pageEligibility: provider_count_gte_2_and_local_value

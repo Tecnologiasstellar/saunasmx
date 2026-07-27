@@ -28,10 +28,11 @@ function formatIssues(where: string, error: z.ZodError): string[] {
   });
 }
 
-function toOptions(options: Array<string | number>): QuestionnaireOption[] {
+function toOptions(options: Array<number | { value: string | number; label: string }>): QuestionnaireOption[] {
   return options.map((option) => {
-    const value = String(option);
-    return { value, label: value };
+    // A bare number is its own label; anything else must have said so explicitly.
+    if (typeof option === 'number') return { value: String(option), label: String(option) };
+    return { value: String(option.value), label: option.label };
   });
 }
 
@@ -162,6 +163,7 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
     category: file.category,
     localization: file.localization,
     themeKey: file.theme,
+    nav: file.nav,
     features: file.features,
     seo: file.seo,
     questionnaire,

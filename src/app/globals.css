@@ -1,24 +1,59 @@
 @import 'tailwindcss';
 
+/*
+  Defaults only. Every value here is overridden per marketplace by
+  `themeStyle()` on <html> (src/modules/ui/themes.ts), so nothing in this file
+  is allowed to hardcode a brand colour.
+*/
 :root {
   --brand: #1f2937;
+  --brand-hover: #111827;
   --brand-ink: #ffffff;
   --brand-soft: #f3f4f6;
   --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --glow: #cbd5e1;
+  --canvas: #ffffff;
   --surface: #ffffff;
   --surface-muted: #f8fafc;
+  --surface-dark: #0f172a;
   --ink: #0f172a;
   --ink-muted: #52606d;
+  --ink-subtle: #7b8794;
   --border: #e2e8f0;
-  --radius: 0.75rem;
+  --radius: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-panel: 1rem;
   --font-heading: ui-sans-serif, system-ui, sans-serif;
   --font-body: ui-sans-serif, system-ui, sans-serif;
+
+  /* Elevation is theme-independent: both shadows are neutral black alphas. */
+  --shadow: 0 20px 40px rgb(0 0 0 / 0.06);
+  --shadow-float: 0 30px 60px rgb(0 0 0 / 0.35);
+
+  /* Page gutter. 20px on phones, 64px from the desktop breakpoint up. */
+  --gutter: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 4rem;
+  }
 }
 
 body {
-  background: var(--surface);
+  background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-body);
+  /* A sticky header plus in-page anchors need scroll padding, or the target
+     heading lands underneath the header. */
+  scroll-padding-top: 6rem;
 }
 
 h1,
@@ -27,8 +62,185 @@ h3 {
   font-family: var(--font-heading);
 }
 
+/* Utility used by the page shells so gutters stay in one place. */
+.gutter {
+  padding-inline: var(--gutter);
+}
+
+/* Restrained lift shared by every card that reacts to the pointer. */
+.lift {
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Striped stand-in for photography that has not been shot yet. Deliberately
+   abstract: it must never read as a real photograph. */
+.placeholder-media {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--border),
+    var(--border) 12px,
+    var(--brand-soft) 12px,
+    var(--brand-soft) 24px
+  );
+}
+/* Hero backdrop stand-in. Mixed from the theme's own dark surface and glow so
+   it reads as warm wood on saunas and as the pergola palette on pergolas —
+   one rule, no per-marketplace texture. */
+.placeholder-wood {
+  background: repeating-linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--surface-dark) 85%, var(--glow)) 0px,
+    color-mix(in srgb, var(--surface-dark) 85%, var(--glow)) 4px,
+    color-mix(in srgb, var(--surface-dark) 70%, var(--glow)) 4px,
+    color-mix(in srgb, var(--surface-dark) 70%, var(--glow)) 34px
+  );
+}
+.placeholder-logo {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--ink-muted),
+    var(--ink-muted) 4px,
+    var(--ink-subtle) 4px,
+    var(--ink-subtle) 8px
+  );
+}
+
+/* Blog article body. Replaces @tailwindcss/typography — the generated markdown
+   only ever emits these elements, so a plugin would be dead weight. */
+.article-body {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  .article-body {
+    font-size: 1.125rem;
+  }
+}
+.article-body > * + * {
+  margin-top: 1.5rem;
+}
+.article-body h2 {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 3rem;
+}
+.article-body h3 {
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+}
+.article-body a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-body a:hover {
+  color: var(--brand-hover);
+}
+.article-body ul,
+.article-body ol {
+  padding-left: 1.5rem;
+}
+.article-body ul {
+  list-style: disc;
+}
+.article-body ol {
+  list-style: decimal;
+}
+.article-body li + li {
+  margin-top: 0.5rem;
+}
+/* The wrapper scrolls, not the page: a wide table must never push the body
+   sideways on a phone. */
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  font-size: 0.9375rem;
+}
+.article-body th,
+.article-body td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem 0.75rem 0;
+  text-align: left;
+  /* Cells wrap; the scroll container above is the fallback for a table that
+     still cannot fit. Nowrap here truncated the last column mid-word. */
+  vertical-align: top;
+}
+.article-body th {
+  color: var(--ink-subtle);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.article-body blockquote {
+  background: var(--brand-soft);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  padding: 1.5rem 1.75rem;
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.article-body blockquote p {
+  margin: 0;
+}
+.article-body img,
+.article-body video,
+.article-body iframe {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
+}
+/* Terracotta drop cap on the opening paragraph only. */
+.article-body > p:first-child::first-letter {
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  line-height: 1;
+  float: left;
+  padding-right: 0.625rem;
+  color: var(--brand);
+}
+
+/* Directory filters: one set of controls, collapsible on phones, a plain rail
+   on desktop. The disclosure opens by default — a closed <details> is hidden
+   from the accessibility tree and from pointer input, so collapsing it by
+   viewport would make the filters unreachable on desktop, where the toggle is
+   not even shown. */
+@media (min-width: 1024px) {
+  .filter-disclosure > summary {
+    display: none;
+  }
+}
+
 /* Visible keyboard focus everywhere; accessibility is a launch gate. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--brand);
   outline-offset: 2px;
+}
+
+/* Motion is decoration here — every animation above is safe to drop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover {
+    transform: none;
+  }
 }
