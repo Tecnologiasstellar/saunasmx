@@ -133,7 +133,11 @@ assignment, and the provider pipeline through quote and outcome.
 
 Deferred with reasons recorded in `docs/13-acceptance-criteria.md`: the
 commercial engine (phase 5), the AI gateway (phase 6), WhatsApp, Payload CMS,
-and production readiness (phase 8). Nothing is deployed.
+and production readiness (phase 8).
+
+Deployment: GitHub → Vercel, against Neon PostgreSQL. The database is migrated
+and bootstrapped; `saunas.mx` is not verified live until the checks in
+`docs/17-launch-saunas-mx.md` pass.
 
 Deviations from the specification are recorded as ADR-009, ADR-010 and ADR-011.
 
