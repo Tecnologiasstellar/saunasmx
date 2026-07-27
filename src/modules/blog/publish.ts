@@ -95,12 +95,17 @@ async function dataForSeo<T>(path: string, body: unknown): Promise<T | null> {
     body: JSON.stringify(body),
   });
 
+  // Never fail the day's post over a research API — log and degrade. DataForSEO
+  // puts the actionable reason in the body (unverified account, no balance), not
+  // in the status line, so surface it or the CI log says only "403".
+  const payload = (await response.json().catch(() => null)) as { status_message?: string } | null;
+
   if (!response.ok) {
-    // Never fail the day's post over a research API. Log and degrade.
-    console.warn(`DataForSEO ${path} → ${response.status}. Continuing without it.`);
+    const reason = payload?.status_message ?? 'no detail returned';
+    console.warn(`DataForSEO ${path} → ${response.status}: ${reason} Falling back to the seed keyword.`);
     return null;
   }
-  return (await response.json()) as T;
+  return payload as T;
 }
 
 async function findKeyword(seed: string): Promise<Keyword> {
