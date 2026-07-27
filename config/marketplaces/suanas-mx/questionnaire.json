@@ -4,11 +4,37 @@
   "locale": "es-MX",
   "steps": [
     {"id":"location","type":"postal_code","label":"¿Dónde se instalaría?","required":true},
-    {"id":"setting","type":"single_select","label":"¿Dónde quieres tu sauna?","required":true,"options":["indoor","outdoor","unsure"]},
-    {"id":"type","type":"single_select","label":"¿Qué tipo te interesa?","required":true,"options":["traditional","infrared","steam","unsure"]},
-    {"id":"capacity","type":"single_select","label":"¿Para cuántas personas?","required":true,"options":[2,4,6,8,"more_than_8"]},
-    {"id":"budget","type":"single_select","label":"¿Cuál es tu presupuesto estimado?","required":true,"options":["under_50000","50000_100000","100000_200000","over_200000","unsure"]},
-    {"id":"timeline","type":"single_select","label":"¿Cuándo te gustaría hacerlo?","required":true,"options":["now","one_to_three_months","six_months","researching"]},
+    {"id":"setting","type":"single_select","label":"¿Dónde quieres tu sauna?","required":true,"options":[
+      {"value":"indoor","label":"Bajo techo"},
+      {"value":"outdoor","label":"Al aire libre"},
+      {"value":"unsure","label":"Todavía no lo decido"}
+    ]},
+    {"id":"type","type":"single_select","label":"¿Qué tipo te interesa?","required":true,"options":[
+      {"value":"traditional","label":"Sauna tradicional (piedras y calor seco)"},
+      {"value":"infrared","label":"Sauna infrarroja"},
+      {"value":"steam","label":"Baño de vapor"},
+      {"value":"unsure","label":"Quiero que me asesoren"}
+    ]},
+    {"id":"capacity","type":"single_select","label":"¿Para cuántas personas?","required":true,"options":[
+      2,
+      4,
+      6,
+      8,
+      {"value":"more_than_8","label":"Más de 8"}
+    ]},
+    {"id":"budget","type":"single_select","label":"¿Cuál es tu presupuesto estimado?","required":true,"options":[
+      {"value":"under_50000","label":"Menos de $50,000 MXN"},
+      {"value":"50000_100000","label":"$50,000 – $100,000 MXN"},
+      {"value":"100000_200000","label":"$100,000 – $200,000 MXN"},
+      {"value":"over_200000","label":"Más de $200,000 MXN"},
+      {"value":"unsure","label":"Aún no lo sé"}
+    ]},
+    {"id":"timeline","type":"single_select","label":"¿Cuándo te gustaría hacerlo?","required":true,"options":[
+      {"value":"now","label":"Lo antes posible"},
+      {"value":"one_to_three_months","label":"En 1 a 3 meses"},
+      {"value":"six_months","label":"En unos 6 meses"},
+      {"value":"researching","label":"Sólo estoy investigando"}
+    ]},
     {"id":"notes","type":"long_text","label":"Cuéntanos un poco más","required":false,"maxLength":2000},
     {"id":"contact","type":"contact","label":"¿A dónde te enviamos opciones?","required":true,"fields":["name","email","phone"]},
     {"id":"consent","type":"consent","label":"Acepto que Saunas.mx comparta mis datos con proveedores relevantes para responder a mi proyecto. Ver Aviso de Privacidad.","required":true}

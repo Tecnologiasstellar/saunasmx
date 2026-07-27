@@ -1,0 +1,38 @@
+name: Publicar artículo diario
+
+# Writing a 1,500-word article takes ~75-90s, which exceeds Vercel Hobby's 60s
+# function cap. GitHub Actions has no such limit and runs the same script the
+# operator runs locally. /api/blog/publish stays available for Vercel Cron on a
+# plan with a longer timeout — see docs/blog-operations.md.
+on:
+  schedule:
+    - cron: '0 13 * * *' # 07:00 in Mexico City (UTC-6)
+  workflow_dispatch: # lets you trigger a run by hand from the Actions tab
+
+# Two runs writing the same slug would race on the unique index.
+concurrency:
+  group: blog-daily
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run blog:agent
+        env:
+          BLOG_DATABASE_URL: ${{ secrets.BLOG_DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional. Unset = the agent falls back to a rotating seed keyword.
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
