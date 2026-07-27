@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Questionnaire, QuestionnaireStep } from '../marketplace-config/types';
+import { buttonClass } from '../ui/primitives';
 import { PRIVACY_POLICY_VERSION } from './policy';
 
 /**
@@ -24,17 +25,25 @@ export function QuestionnaireForm({
   questionnaire,
   marketplaceSlug,
   consentLabel,
+  initialPostalCode = '',
 }: {
   questionnaire: Questionnaire;
   marketplaceSlug: string;
   consentLabel: string;
+  /**
+   * Prefill from a `?cp=` link (an article's lead card). The route validates it
+   * server-side before passing it here, it renders identically on server and
+   * client, and the API revalidates it again — a crafted link cannot widen what
+   * the questionnaire accepts, and it skips no step.
+   */
+  initialPostalCode?: string;
 }) {
   const router = useRouter();
   const steps = questionnaire.steps;
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
-  const [postalCode, setPostalCode] = useState('');
+  const [postalCode, setPostalCode] = useState(initialPostalCode);
   const [contact, setContact] = useState<Contact>({ name: '', email: '', phone: '' });
   const [consent, setConsent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -132,157 +141,199 @@ export function QuestionnaireForm({
     }
   }
 
+  const inputClass =
+    'w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 text-[0.9375rem] text-[var(--ink)] placeholder:text-[var(--ink-subtle)]';
+  const fieldLabelClass = 'block text-[0.6875rem] font-bold uppercase tracking-[0.15em] text-[var(--ink-subtle)]';
+
   return (
-    <div className="mx-auto max-w-xl px-6 py-10">
-      <p className="text-sm text-[var(--ink-muted)]">
-        Paso {index + 1} de {steps.length}
-      </p>
-      <div className="mt-2 h-1 w-full rounded bg-[var(--border)]">
-        <div
-          className="h-1 rounded bg-[var(--brand)] transition-all"
-          style={{ width: `${((index + 1) / steps.length) * 100}%` }}
-        />
-      </div>
-
-      <h1 className="mt-6 text-2xl font-semibold" data-testid="step-label">
-        {step.label}
-      </h1>
-      {step.help ? <p className="mt-2 text-[var(--ink-muted)]">{step.help}</p> : null}
-
-      <div className="mt-6 space-y-4">
-        {step.type === 'postal_code' ? (
-          <input
-            data-testid="input-postal-code"
-            className="w-full rounded-[var(--radius)] border border-[var(--border)] px-4 py-3"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="00000"
-            aria-label={step.label}
-            value={postalCode}
-            onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, ''))}
-          />
-        ) : null}
-
-        {step.type === 'single_select'
-          ? step.options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                data-testid={`option-${step.id}-${option.value}`}
-                onClick={() => setAnswers((current) => ({ ...current, [step.id]: option.value }))}
-                className={`block w-full rounded-[var(--radius)] border px-4 py-3 text-left ${
-                  answers[step.id] === option.value
-                    ? 'border-[var(--brand)] bg-[var(--brand-soft)] font-medium'
-                    : 'border-[var(--border)]'
+    <div className="gutter mx-auto w-full max-w-[560px] py-10 md:py-16">
+      <div className="rounded-[var(--radius-panel)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow)] md:p-9">
+        <div className="flex items-center justify-between gap-4">
+          <p className={fieldLabelClass}>
+            Paso {index + 1} de {steps.length}
+          </p>
+          {/* Segment per step, mirroring the handoff's pill progress bar. The
+              <progress> element carries the value for assistive technology. */}
+          <div aria-hidden="true" className="flex gap-1.5">
+            {steps.map((entry, position) => (
+              <span
+                key={entry.id}
+                className={`h-1 w-4 rounded-sm sm:w-5 ${
+                  position <= index ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'
                 }`}
-                aria-pressed={answers[step.id] === option.value}
-              >
-                {option.label}
-              </button>
-            ))
-          : null}
+              />
+            ))}
+          </div>
+        </div>
+        <progress className="sr-only" value={index + 1} max={steps.length} />
 
-        {step.type === 'long_text' ? (
-          <textarea
-            data-testid={`input-${step.id}`}
-            className="w-full rounded-[var(--radius)] border border-[var(--border)] px-4 py-3"
-            rows={5}
-            maxLength={step.maxLength}
-            aria-label={step.label}
-            value={answers[step.id] ?? ''}
-            onChange={(event) => setAnswers((current) => ({ ...current, [step.id]: event.target.value }))}
-          />
-        ) : null}
+        <h1
+          className="mt-6 font-[family-name:var(--font-heading)] text-[1.625rem] font-semibold leading-tight text-[var(--ink)]"
+          data-testid="step-label"
+        >
+          {step.label}
+        </h1>
+        {step.help ? <p className="mt-2 text-[var(--ink-muted)]">{step.help}</p> : null}
 
-        {step.type === 'contact' ? (
-          <>
-            {step.fields.includes('name') ? (
-              <label className="block">
-                <span className="text-sm text-[var(--ink-muted)]">Nombre</span>
-                <input
-                  data-testid="input-name"
-                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 py-3"
-                  autoComplete="name"
-                  value={contact.name}
-                  onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))}
-                />
-              </label>
-            ) : null}
-            {step.fields.includes('email') ? (
-              <label className="block">
-                <span className="text-sm text-[var(--ink-muted)]">Correo</span>
-                <input
-                  data-testid="input-email"
-                  type="email"
-                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 py-3"
-                  autoComplete="email"
-                  value={contact.email}
-                  onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))}
-                />
-              </label>
-            ) : null}
-            {step.fields.includes('phone') ? (
-              <label className="block">
-                <span className="text-sm text-[var(--ink-muted)]">Teléfono (10 dígitos)</span>
-                <input
-                  data-testid="input-phone"
-                  type="tel"
-                  className="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 py-3"
-                  autoComplete="tel"
-                  value={contact.phone}
-                  onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
-                />
-              </label>
-            ) : null}
-          </>
-        ) : null}
+        <div className="mt-7 space-y-3">
+          {step.type === 'postal_code' ? (
+            <label className="block">
+              <span className={fieldLabelClass}>Código postal</span>
+              <input
+                data-testid="input-postal-code"
+                className={`mt-2 ${inputClass} max-w-[180px] tracking-[0.2em]`}
+                inputMode="numeric"
+                maxLength={5}
+                placeholder="00000"
+                aria-label={step.label}
+                value={postalCode}
+                onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, ''))}
+              />
+            </label>
+          ) : null}
 
-        {step.type === 'consent' ? (
-          <label className="flex items-start gap-3">
-            <input
-              data-testid="input-consent"
-              type="checkbox"
-              className="mt-1 h-5 w-5"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
+          {step.type === 'single_select'
+            ? step.options.map((option) => {
+                const selected = answers[step.id] === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    data-testid={`option-${step.id}-${option.value}`}
+                    onClick={() => setAnswers((current) => ({ ...current, [step.id]: option.value }))}
+                    className={`lift flex w-full items-center gap-3 rounded-[var(--radius-card)] px-4 py-4 text-left text-[0.9375rem] hover:border-[var(--brand)] ${
+                      selected
+                        ? 'border-2 border-[var(--brand)] bg-[var(--surface)] font-semibold'
+                        : 'border border-[var(--border)] bg-[var(--canvas)]'
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-4 w-4 flex-none rounded-full border-2 border-[var(--brand)] ${
+                        selected ? 'bg-[var(--brand)]' : 'bg-[var(--brand-soft)]'
+                      }`}
+                    />
+                    {option.label}
+                  </button>
+                );
+              })
+            : null}
+
+          {step.type === 'long_text' ? (
+            <textarea
+              data-testid={`input-${step.id}`}
+              className={inputClass}
+              rows={5}
+              maxLength={step.maxLength}
+              aria-label={step.label}
+              value={answers[step.id] ?? ''}
+              onChange={(event) => setAnswers((current) => ({ ...current, [step.id]: event.target.value }))}
             />
-            <span className="text-[var(--ink)]">{consentLabel}</span>
-          </label>
-        ) : null}
+          ) : null}
+
+          {step.type === 'contact' ? (
+            <>
+              {step.fields.includes('name') ? (
+                <label className="block">
+                  <span className={fieldLabelClass}>Nombre</span>
+                  <input
+                    data-testid="input-name"
+                    className={`mt-2 ${inputClass}`}
+                    autoComplete="name"
+                    value={contact.name}
+                    onChange={(event) => setContact((current) => ({ ...current, name: event.target.value }))}
+                  />
+                </label>
+              ) : null}
+              {step.fields.includes('email') ? (
+                <label className="block">
+                  <span className={fieldLabelClass}>Correo</span>
+                  <input
+                    data-testid="input-email"
+                    type="email"
+                    className={`mt-2 ${inputClass}`}
+                    autoComplete="email"
+                    value={contact.email}
+                    onChange={(event) => setContact((current) => ({ ...current, email: event.target.value }))}
+                  />
+                </label>
+              ) : null}
+              {step.fields.includes('phone') ? (
+                <label className="block">
+                  <span className={fieldLabelClass}>Teléfono (10 dígitos)</span>
+                  <input
+                    data-testid="input-phone"
+                    type="tel"
+                    className={`mt-2 ${inputClass}`}
+                    autoComplete="tel"
+                    value={contact.phone}
+                    onChange={(event) => setContact((current) => ({ ...current, phone: event.target.value }))}
+                  />
+                </label>
+              ) : null}
+            </>
+          ) : null}
+
+          {step.type === 'consent' ? (
+            <label className="flex items-start gap-3 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--canvas)] p-4">
+              <input
+                data-testid="input-consent"
+                type="checkbox"
+                className="mt-1 h-5 w-5 flex-none accent-[var(--brand)]"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+              />
+              <span className="text-[0.9375rem] leading-relaxed text-[var(--ink)]">{consentLabel}</span>
+            </label>
+          ) : null}
+        </div>
+
+        {/* aria-live so a validation failure is announced, not only shown. */}
+        <div aria-live="polite">
+          {localError ? (
+            <p
+              role="alert"
+              data-testid="form-error"
+              className="mt-5 rounded-[var(--radius)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+            >
+              {localError}
+            </p>
+          ) : null}
+          {serverErrors.length > 0 ? (
+            <ul className="mt-2 list-disc rounded-[var(--radius)] border border-red-200 bg-red-50 px-4 py-3 pl-8 text-sm text-red-800">
+              {serverErrors.map((error) => (
+                <li key={error.field}>{error.message}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between gap-4 border-t border-[var(--border)] pt-6">
+          <button
+            type="button"
+            className="text-sm font-medium text-[var(--ink-muted)] underline underline-offset-4 hover:text-[var(--brand)] disabled:opacity-40 disabled:hover:text-[var(--ink-muted)]"
+            onClick={() => setIndex((value) => Math.max(0, value - 1))}
+            disabled={index === 0 || submitting}
+          >
+            Atrás
+          </button>
+          <button
+            type="button"
+            data-testid={isLast ? 'submit' : 'next'}
+            className={buttonClass('primary', 'px-7 py-3.5')}
+            onClick={isLast ? submit : next}
+            disabled={submitting}
+          >
+            {isLast ? (submitting ? 'Enviando…' : 'Enviar proyecto') : 'Continuar'}
+            {isLast ? null : <span aria-hidden="true">→</span>}
+          </button>
+        </div>
       </div>
 
-      {localError ? (
-        <p role="alert" data-testid="form-error" className="mt-4 text-sm text-red-700">
-          {localError}
-        </p>
-      ) : null}
-      {serverErrors.length > 0 ? (
-        <ul className="mt-2 list-disc pl-5 text-sm text-red-700">
-          {serverErrors.map((error) => (
-            <li key={error.field}>{error.message}</li>
-          ))}
-        </ul>
-      ) : null}
-
-      <div className="mt-8 flex items-center justify-between">
-        <button
-          type="button"
-          className="text-sm text-[var(--ink-muted)] underline disabled:opacity-40"
-          onClick={() => setIndex((value) => Math.max(0, value - 1))}
-          disabled={index === 0 || submitting}
-        >
-          Atrás
-        </button>
-        <button
-          type="button"
-          data-testid={isLast ? 'submit' : 'next'}
-          className="rounded-[var(--radius)] bg-[var(--brand)] px-6 py-3 font-medium text-[var(--brand-ink)] disabled:opacity-60"
-          onClick={isLast ? submit : next}
-          disabled={submitting}
-        >
-          {isLast ? (submitting ? 'Enviando…' : 'Enviar proyecto') : 'Continuar'}
-        </button>
-      </div>
+      <p className="mt-5 text-center text-sm text-[var(--ink-muted)]">
+        Compartimos tus datos únicamente con los proveedores asignados a tu proyecto.
+      </p>
     </div>
   );
 }

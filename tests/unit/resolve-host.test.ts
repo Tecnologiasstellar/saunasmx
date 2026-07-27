@@ -19,6 +19,7 @@ function config(slug: string, domain: string, aliases: string[] = []): Marketpla
     category: 'sauna',
     localization: { locale: 'es-MX', currency: 'MXN', country: 'MX' },
     themeKey: 'warm-wellness',
+    nav: [],
     features: {},
     seo: { defaultIndexing: true, pageEligibility: 'x', primaryCta: 'y' },
     questionnaire: { id: 'q', version: 1, locale: 'es-MX', steps: [] },

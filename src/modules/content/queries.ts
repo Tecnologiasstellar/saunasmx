@@ -63,10 +63,52 @@ export async function getPublishedPage(
 }
 
 /** Narrowing helpers keep `unknown` block payloads out of the components. */
-export function asHero(content: unknown): { headline: string; body: string } | null {
-  const value = content as { headline?: unknown; body?: unknown } | null;
+export function asHero(content: unknown): { headline: string; body: string; eyebrow: string | null } | null {
+  const value = content as { headline?: unknown; body?: unknown; eyebrow?: unknown } | null;
   if (!value || typeof value.headline !== 'string' || typeof value.body !== 'string') return null;
-  return { headline: value.headline, body: value.body };
+  return {
+    headline: value.headline,
+    body: value.body,
+    eyebrow: typeof value.eyebrow === 'string' ? value.eyebrow : null,
+  };
+}
+
+export type ColumnsBlock = {
+  /** Anchor id, so `config.nav` can link straight to this section. */
+  anchor: string;
+  eyebrow: string | null;
+  title: string;
+  lead: string | null;
+  columns: Array<{ title: string; tone: 'dark' | 'cold'; items: string[] }>;
+};
+
+/**
+ * A two-up explainer section. The sauna site uses it for heat vs cold; the
+ * pergola site uses it for materials. Which one renders is data, not a branch.
+ */
+export function asColumns(content: unknown): ColumnsBlock | null {
+  const value = content as Partial<ColumnsBlock> | null;
+  if (!value || typeof value.anchor !== 'string' || typeof value.title !== 'string') return null;
+  if (!Array.isArray(value.columns)) return null;
+
+  const columns = value.columns.filter(
+    (column): column is ColumnsBlock['columns'][number] =>
+      typeof column === 'object' &&
+      column !== null &&
+      typeof column.title === 'string' &&
+      (column.tone === 'dark' || column.tone === 'cold') &&
+      Array.isArray(column.items) &&
+      column.items.every((item) => typeof item === 'string'),
+  );
+  if (columns.length === 0) return null;
+
+  return {
+    anchor: value.anchor,
+    eyebrow: typeof value.eyebrow === 'string' ? value.eyebrow : null,
+    title: value.title,
+    lead: typeof value.lead === 'string' ? value.lead : null,
+    columns,
+  };
 }
 
 export function asBullets(content: unknown): string[] | null {

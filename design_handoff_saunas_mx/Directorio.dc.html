@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;box-sizing:border-box}
+  *{box-sizing:border-box}
+  a{color:#B8623A;text-decoration:none}
+  a:hover{color:#9C5330}
+</style>
+</helmet>
+<div style="font-family:'Plus Jakarta Sans',sans-serif;background:#FAF6F0;color:#1A1D20;min-height:100vh">
+
+  <nav style="position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:20px 64px;background:#FFFFFF;border-bottom:1px solid #E8DED2">
+    <a href="./Homepage.dc.html" style="font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:#1A1D20">saunas.mx</a>
+    <div style="display:flex;align-items:center;gap:40px">
+      <a href="./Directorio.dc.html" style="font-size:15px;color:#B8623A;font-weight:600">Directorio</a>
+      <a href="./Homepage.dc.html#ciencia" style="font-size:15px;color:#525B62" style-hover="color:#B8623A">Ciencia</a>
+      <a href="./Articulo.dc.html" style="font-size:15px;color:#525B62" style-hover="color:#B8623A">Blog</a>
+      <a href="#" style="background:#B8623A;color:#FAF6F0;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600" style-hover="background:#9C5330">Cotizar Ahora</a>
+    </div>
+  </nav>
+
+  <header style="padding:56px 64px 32px;border-bottom:1px solid #E8DED2">
+    <p style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#B8623A;margin:0 0 12px">Marketplace de Proveedores</p>
+    <h1 style="font-family:'Playfair Display',serif;font-size:48px;font-weight:500;letter-spacing:-0.01em;margin:0 0 12px">Directorio General de Fabricantes Verificados</h1>
+    <p style="font-size:16px;color:#525B62;max-width:640px;margin:0">Compara especificaciones, cobertura y garantías de fabricantes certificados en todo México.</p>
+  </header>
+
+  <div style="display:grid;grid-template-columns:260px 1fr;gap:0;align-items:start">
+
+    <!-- FILTER SIDEBAR -->
+    <aside style="padding:40px 32px;border-right:1px solid #E8DED2;position:sticky;top:81px;display:flex;flex-direction:column;gap:32px">
+      <div>
+        <h4 style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8C96A0;margin:0 0 16px">Ubicación</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" checked style="accent-color:#B8623A"/>Cobertura Nacional</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>CDMX / Edo. México</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>Jalisco / Nuevo León</label>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8C96A0;margin:0 0 16px">Tipo de Madera</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>Cedro Rojo</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>Abeto Nórdico</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>Termo-Madera</label>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8C96A0;margin:0 0 16px">Tiempo de Entrega</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="radio" name="entrega" style="accent-color:#B8623A"/>2–4 semanas</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="radio" name="entrega" checked style="accent-color:#B8623A"/>4–8 semanas</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="radio" name="entrega" style="accent-color:#B8623A"/>8+ semanas</label>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8C96A0;margin:0 0 16px">Garantía</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>5+ años</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1A1D20"><input type="checkbox" style="accent-color:#B8623A"/>10+ años</label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- SUPPLIER GRID -->
+    <main style="padding:40px 48px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <p style="font-size:14px;color:#525B62;margin:0">24 fabricantes verificados</p>
+        <select style="font-size:14px;color:#1A1D20;border:1px solid #E8DED2;border-radius:8px;padding:10px 14px;background:#FFFFFF">
+          <option>Ordenar: Más Relevantes</option>
+          <option>Ordenar: Mejor Calificados</option>
+          <option>Ordenar: Entrega Más Rápida</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Cedro Nativo Saunas</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura: CDMX / Edo. México</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Garantía Directa</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Instalación Incluida</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Glacier Tinas México</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura: Nuevo León / Jalisco</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Cobertura Nacional</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Garantía Directa</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Infrarrojo Lujo MX</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura Nacional</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Instalación Incluida</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Entrega Rápida</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Baja Wood Works</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura: Baja California</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Madera Certificada</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Garantía 10 años</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Termia Nórdica</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura: Bajío</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Entrega Rápida</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Instalación Incluida</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E8DED2;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="width:64px;height:64px;border-radius:8px;background:repeating-linear-gradient(45deg,#525B62,#525B62 4px,#8C96A0 4px,#8C96A0 8px)"></div>
+          <span style="align-self:flex-start;background:#F1E4D8;color:#B8623A;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;border-radius:6px">Proveedor Verificado México</span>
+          <h3 style="font-size:22px;font-weight:600;margin:0">Plunge Sonora</h3>
+          <p style="font-size:13px;color:#8C96A0;margin:0">Cobertura: Sonora / Sinaloa</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Garantía Directa</span>
+            <span style="font-size:12px;color:#525B62;background:#FAF6F0;border:1px solid #E8DED2;padding:5px 10px;border-radius:100px">Certificado Eléctrico</span>
+          </div>
+          <a href="#" style="margin-top:8px;text-align:center;border:1px solid #B8623A;color:#B8623A;border-radius:8px;padding:12px;font-size:14px;font-weight:600" style-hover="background:#B8623A;color:#FAF6F0">Solicitar Cotización Directa</a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <footer style="background:#0C0E10;color:rgba(250,246,240,0.6);padding:48px 64px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-family:'Playfair Display',serif;font-size:20px;color:#FAF6F0">saunas.mx</span>
+    <div style="display:flex;gap:32px;font-size:14px">
+      <a href="./Directorio.dc.html" style="color:rgba(250,246,240,0.6)" style-hover="color:#E8C39A">Fabricantes</a>
+      <a href="./Homepage.dc.html#ciencia" style="color:rgba(250,246,240,0.6)" style-hover="color:#E8C39A">Ciencia</a>
+      <a href="./Articulo.dc.html" style="color:rgba(250,246,240,0.6)" style-hover="color:#E8C39A">Blog</a>
+      <a href="#" style="color:rgba(250,246,240,0.6)" style-hover="color:#E8C39A">Contacto</a>
+    </div>
+  </footer>
+</div>
+
+</x-dc>
+</body>
+</html>

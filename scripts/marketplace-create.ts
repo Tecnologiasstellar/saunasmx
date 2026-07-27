@@ -114,21 +114,38 @@ writeFileSync(
           type: 'single_select',
           label: 'TODO: ¿qué tipo te interesa?',
           required: true,
-          options: ['option_a', 'option_b', 'unsure'],
+          // `value` is what matching and provider coverage key on; `label` is
+          // the only part a consumer ever reads. Keep the keys, rewrite the labels.
+          options: [
+            { value: 'option_a', label: 'TODO: primera opción' },
+            { value: 'option_b', label: 'TODO: segunda opción' },
+            { value: 'unsure', label: 'Quiero que me asesoren' },
+          ],
         },
         {
           id: 'budget',
           type: 'single_select',
           label: '¿Cuál es tu presupuesto estimado?',
           required: true,
-          options: ['under_50000', '50000_100000', '100000_200000', 'over_200000', 'unsure'],
+          options: [
+            { value: 'under_50000', label: 'Menos de $50,000 MXN' },
+            { value: '50000_100000', label: '$50,000 – $100,000 MXN' },
+            { value: '100000_200000', label: '$100,000 – $200,000 MXN' },
+            { value: 'over_200000', label: 'Más de $200,000 MXN' },
+            { value: 'unsure', label: 'Aún no lo sé' },
+          ],
         },
         {
           id: 'timeline',
           type: 'single_select',
           label: '¿Cuándo te gustaría hacerlo?',
           required: true,
-          options: ['now', 'one_to_three_months', 'six_months', 'researching'],
+          options: [
+            { value: 'now', label: 'Lo antes posible' },
+            { value: 'one_to_three_months', label: 'En 1 a 3 meses' },
+            { value: 'six_months', label: 'En unos 6 meses' },
+            { value: 'researching', label: 'Sólo estoy investigando' },
+          ],
         },
         { id: 'notes', type: 'long_text', label: 'Cuéntanos un poco más', required: false, maxLength: 2000 },
         { id: 'contact', type: 'contact', label: '¿A dónde te enviamos opciones?', required: true, fields: ['name', 'email', 'phone'] },
@@ -182,6 +199,7 @@ ai_role: attribute_extraction_and_summary_only
 console.log(`Created ${target}`);
 console.log('\nLaunch checklist:');
 console.log('  1. Edit questionnaire.json — replace the TODO step and its options.');
+console.log('     Every option label is consumer-facing copy; the value is the internal key.');
 console.log('  2. Edit matching.yaml — answer_mapping.service must name a single_select step.');
 console.log('  3. npm run config:validate');
 console.log('  4. npm run db:seed          (publishes the marketplace and its domain)');

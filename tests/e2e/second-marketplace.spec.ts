@@ -21,8 +21,35 @@ test('renders a distinct brand and theme from the shared code path', async ({ pa
 
   await page.goto('/');
   const sauna = await page.locator('html').getAttribute('style');
-  expect(sauna).toContain('--brand:#7c3f19');
+  // The warm-wellness theme carries the saunas.mx design system.
+  expect(sauna).toContain('--brand:#B8623A');
+  expect(sauna).toContain('--surface-dark:#0C0E10');
   expect(sauna).not.toEqual(style);
+});
+
+test('each marketplace links only to the sections it actually publishes', async ({ page }) => {
+  await page.goto('/');
+  const saunaNav = page.getByRole('navigation', { name: 'Principal' });
+  await expect(saunaNav.getByRole('link', { name: 'Directorio' })).toBeVisible();
+  await expect(saunaNav.getByRole('link', { name: 'Ciencia' })).toBeVisible();
+  await expect(saunaNav.getByRole('link', { name: 'Blog' })).toBeVisible();
+
+  await page.goto(`${PERGOLAS}/`);
+  const pergolaNav = page.getByRole('navigation', { name: 'Principal' });
+  await expect(pergolaNav.getByRole('link', { name: 'Directorio' })).toBeVisible();
+  // The editorial corpus is sauna-only, so this marketplace neither links to it…
+  await expect(pergolaNav.getByRole('link', { name: 'Blog' })).toHaveCount(0);
+  // …nor serves it.
+  expect((await page.goto(`${PERGOLAS}/blog`))?.status()).toBe(404);
+});
+
+test('the shared homepage renders each marketplace own explainer section', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#ciencia')).toContainText('calor y el frío');
+
+  await page.goto(`${PERGOLAS}/`);
+  await expect(page.locator('#guia')).toContainText('madera y el metal');
+  await expect(page.locator('#ciencia')).toHaveCount(0);
 });
 
 test('renders a different questionnaire without a category-specific route', async ({ page }) => {

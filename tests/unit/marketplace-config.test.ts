@@ -24,7 +24,16 @@ const VALID_QUESTIONNAIRE = {
   locale: 'es-MX',
   steps: [
     { id: 'location', type: 'postal_code', label: '¿Dónde?', required: true },
-    { id: 'budget', type: 'single_select', label: 'Presupuesto', required: true, options: ['a', 'b'] },
+    {
+      id: 'budget',
+      type: 'single_select',
+      label: 'Presupuesto',
+      required: true,
+      options: [
+        { value: 'a', label: 'Opción A' },
+        { value: 'b', label: 'Opción B' },
+      ],
+    },
     { id: 'contact', type: 'contact', label: 'Contacto', required: true, fields: ['name', 'email', 'phone'] },
     { id: 'consent', type: 'consent', label: 'Acepto', required: true },
   ],
@@ -106,13 +115,107 @@ describe('marketplace config loader', () => {
     expect(suanas.configVersion).not.toEqual(pergolas.configVersion);
   });
 
+  it('gives each marketplace its own public navigation', () => {
+    const configs = loadMarketplaceConfigs();
+    const suanas = configs.find((config) => config.slug === 'suanas-mx')!;
+    const pergolas = configs.find((config) => config.slug === 'pergolas-mx')!;
+
+    expect(suanas.nav.map((link) => link.href)).toContain('/blog');
+    // The editorial corpus is sauna-only: pergolas must not link to it.
+    expect(pergolas.nav.map((link) => link.href)).not.toContain('/blog');
+    expect(pergolas.features.blog).toBe(false);
+
+    // Every declared destination is a site-relative path or an anchor, so the
+    // shared header can never render an off-site or dead link.
+    for (const config of configs) {
+      for (const link of config.nav) {
+        expect(link.href).toMatch(/^(\/|#)/);
+        expect(link.href).not.toBe('#');
+        expect(link.label.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('defaults nav to an empty list rather than inventing links', () => {
+    const root = makeRoot({ 'no-nav': {} });
+    const [config] = loadMarketplaceConfigs(root);
+    expect(config!.nav).toEqual([]);
+  });
+
+  it('rejects a nav link that points nowhere', () => {
+    const root = makeRoot({
+      bad: {
+        marketplace: marketplaceYaml('bad', 'bad.example', 'nav:\n  - label: Roto\n    href: "#"\n'),
+      },
+    });
+    const { issues } = loadMarketplaceConfigsSafe(root);
+    expect(issues.join('\n')).toContain('nav.0.href');
+  });
+
+  it('rejects a nav link that leaves the site', () => {
+    const root = makeRoot({
+      bad: {
+        marketplace: marketplaceYaml('bad', 'bad.example', 'nav:\n  - label: Fuera\n    href: https://example.com\n'),
+      },
+    });
+    const { issues } = loadMarketplaceConfigsSafe(root);
+    expect(issues.join('\n')).toContain('nav.0.href');
+  });
+
   it('normalizes select options to string values', () => {
     const suanas = loadMarketplaceConfigs().find((config) => config.slug === 'suanas-mx')!;
     const capacity = suanas.questionnaire.steps.find((step) => step.id === 'capacity');
     expect(capacity?.type).toBe('single_select');
     if (capacity?.type !== 'single_select') throw new Error('unreachable');
-    // The source JSON mixes numbers and strings; storage keys must be strings.
+    // The source JSON mixes numbers and labelled objects; storage keys must be strings.
     expect(capacity.options.map((option) => option.value)).toEqual(['2', '4', '6', '8', 'more_than_8']);
+    // A number is its own label; a key is not.
+    expect(capacity.options.map((option) => option.label)).toEqual(['2', '4', '6', '8', 'Más de 8']);
+  });
+
+  it('never shows a raw key to a consumer in any configured marketplace', () => {
+    // The bug this guards: options shipped as bare keys, so the questionnaire
+    // asked buyers to choose between "indoor" and "more_than_8".
+    for (const config of loadMarketplaceConfigs()) {
+      for (const step of config.questionnaire.steps) {
+        if (step.type !== 'single_select' && step.type !== 'multi_select') continue;
+        for (const option of step.options) {
+          // Numeric options legitimately equal their label; keys must not.
+          if (/^\d+$/.test(option.value)) continue;
+          expect(option.label, `${config.slug}/${step.id}/${option.value}`).not.toBe(option.value);
+          expect(option.label).not.toMatch(/_/);
+        }
+      }
+    }
+  });
+
+  it('rejects a bare string option with an actionable message', () => {
+    const root = makeRoot({
+      'suanas-mx': {
+        questionnaire: {
+          ...VALID_QUESTIONNAIRE,
+          steps: VALID_QUESTIONNAIRE.steps.map((step) =>
+            step.id === 'budget' ? { ...step, options: ['indoor', 'outdoor'] } : step,
+          ),
+        },
+      },
+    });
+    const { issues } = loadMarketplaceConfigsSafe(root);
+    expect(issues.join('\n')).toContain('would show the raw key to consumers');
+  });
+
+  it('rejects an option whose label is blank', () => {
+    const root = makeRoot({
+      'suanas-mx': {
+        questionnaire: {
+          ...VALID_QUESTIONNAIRE,
+          steps: VALID_QUESTIONNAIRE.steps.map((step) =>
+            step.id === 'budget' ? { ...step, options: [{ value: 'a', label: '' }, { value: 'b', label: 'B' }] } : step,
+          ),
+        },
+      },
+    });
+    expect(loadMarketplaceConfigsSafe(root).issues.length).toBeGreaterThan(0);
   });
 
   it('rejects a slug that does not match its directory name', () => {

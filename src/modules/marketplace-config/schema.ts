@@ -29,6 +29,23 @@ export const marketplaceFileSchema = z.strictObject({
   theme: z.string().regex(SLUG),
   questionnaire: z.string().min(1),
   matching: z.string().min(1),
+  /**
+   * Public header/footer links. Each marketplace lists only the destinations it
+   * actually has, so a shared header can never render a link to a section this
+   * marketplace does not publish. The primary "cotizar" CTA is not listed here:
+   * it is part of the funnel and always present.
+   */
+  nav: z
+    .array(
+      z.strictObject({
+        label: z.string().min(1),
+        href: z
+          .string()
+          .regex(/^(\/[A-Za-z0-9\-._~/]*)?(#[A-Za-z0-9\-_]+)?$/, 'must be a site-relative path and/or fragment')
+          .refine((value) => value.length > 0 && value !== '#', 'must point somewhere real, not "#"'),
+      }),
+    )
+    .default([]),
   features: z.record(z.string().regex(/^[a-z][A-Za-z0-9]*$/), z.boolean()),
   seo: z.strictObject({
     defaultIndexing: z.boolean(),
@@ -43,7 +60,24 @@ export type MarketplaceFile = z.infer<typeof marketplaceFileSchema>;
 /* Questionnaire                                                              */
 /* -------------------------------------------------------------------------- */
 
-const optionValue = z.union([z.string().min(1), z.number()]);
+/**
+ * A selectable answer.
+ *
+ * A number stands on its own — "4" reads the same to a consumer as it does to
+ * the matching engine. A key like `indoor` does not, so it must carry the words
+ * the consumer actually sees. Making the terse string form invalid is what stops
+ * a marketplace shipping raw database keys into its own questionnaire.
+ */
+const optionValue = z.union(
+  [
+    z.number(),
+    z.strictObject({
+      value: z.union([z.string().min(1), z.number()]),
+      label: z.string().min(1),
+    }),
+  ],
+  { error: 'must be a number, or {"value": "...", "label": "..."} — a bare string would show the raw key to consumers' },
+);
 
 const stepBase = {
   id: z.string().regex(KEY),

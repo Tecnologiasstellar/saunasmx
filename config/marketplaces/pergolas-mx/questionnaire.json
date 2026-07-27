@@ -4,11 +4,39 @@
   "locale": "es-MX",
   "steps": [
     {"id":"location","type":"postal_code","label":"¿Dónde se instalaría?","required":true},
-    {"id":"setting","type":"single_select","label":"¿Qué espacio quieres cubrir?","required":true,"options":["terrace","garden","rooftop","commercial","unsure"]},
-    {"id":"material","type":"single_select","label":"¿Qué material prefieres?","required":true,"options":["wood","aluminum","steel","unsure"]},
-    {"id":"size","type":"single_select","label":"¿Qué tamaño aproximado necesitas?","required":true,"options":["under_10m2","10_25m2","25_50m2","over_50m2","unsure"]},
-    {"id":"budget","type":"single_select","label":"¿Cuál es tu presupuesto estimado?","required":true,"options":["under_50000","50000_100000","100000_250000","over_250000","unsure"]},
-    {"id":"timeline","type":"single_select","label":"¿Cuándo te gustaría hacerlo?","required":true,"options":["now","one_to_three_months","six_months","researching"]},
+    {"id":"setting","type":"single_select","label":"¿Qué espacio quieres cubrir?","required":true,"options":[
+      {"value":"terrace","label":"Terraza"},
+      {"value":"garden","label":"Jardín"},
+      {"value":"rooftop","label":"Roof garden"},
+      {"value":"commercial","label":"Local o negocio"},
+      {"value":"unsure","label":"Todavía no lo decido"}
+    ]},
+    {"id":"material","type":"single_select","label":"¿Qué material prefieres?","required":true,"options":[
+      {"value":"wood","label":"Madera"},
+      {"value":"aluminum","label":"Aluminio"},
+      {"value":"steel","label":"Acero"},
+      {"value":"unsure","label":"Quiero que me asesoren"}
+    ]},
+    {"id":"size","type":"single_select","label":"¿Qué tamaño aproximado necesitas?","required":true,"options":[
+      {"value":"under_10m2","label":"Menos de 10 m²"},
+      {"value":"10_25m2","label":"10 – 25 m²"},
+      {"value":"25_50m2","label":"25 – 50 m²"},
+      {"value":"over_50m2","label":"Más de 50 m²"},
+      {"value":"unsure","label":"Aún no lo sé"}
+    ]},
+    {"id":"budget","type":"single_select","label":"¿Cuál es tu presupuesto estimado?","required":true,"options":[
+      {"value":"under_50000","label":"Menos de $50,000 MXN"},
+      {"value":"50000_100000","label":"$50,000 – $100,000 MXN"},
+      {"value":"100000_250000","label":"$100,000 – $250,000 MXN"},
+      {"value":"over_250000","label":"Más de $250,000 MXN"},
+      {"value":"unsure","label":"Aún no lo sé"}
+    ]},
+    {"id":"timeline","type":"single_select","label":"¿Cuándo te gustaría hacerlo?","required":true,"options":[
+      {"value":"now","label":"Lo antes posible"},
+      {"value":"one_to_three_months","label":"En 1 a 3 meses"},
+      {"value":"six_months","label":"En unos 6 meses"},
+      {"value":"researching","label":"Sólo estoy investigando"}
+    ]},
     {"id":"contact","type":"contact","label":"¿A dónde te enviamos opciones?","required":true,"fields":["name","email","phone"]},
     {"id":"consent","type":"consent","label":"Acepto que la plataforma comparta mis datos con proveedores relevantes para responder a mi proyecto.","required":true}
   ]

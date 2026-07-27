@@ -9,9 +9,9 @@ Command evidence:
 ```text
 npm run lint             ✓
 npm run typecheck        ✓
-npm test                 ✓  101 unit tests
-npm run test:integration ✓  71 integration tests
-npm run test:e2e         ✓  14 browser tests
+npm test                 ✓  108 unit tests
+npm run test:integration ✓  78 integration tests
+npm run test:e2e         ✓  25 browser tests
 npm run build            ✓
 ```
 
@@ -94,11 +94,34 @@ COM-001 (plans and agreements) is delivered. COM-002 (Stripe) and COM-003 (commi
 - [ ] Prompt-injection fixture is handled safely.
 - [ ] Low-confidence outputs are visible to operators.
 
+## Public site gate
+
+The saunas.mx design system from `design_handoff_saunas_mx/` is implemented as theme tokens and shared components. The rule applied throughout: a public surface may only state what the database or the configuration can prove.
+
+- [x] The warm-wellness visual system lives in tokens, not in components — `src/modules/ui/themes.ts` carries the locked palette, radii and type stacks; `src/app/globals.css` carries elevation, gutters and prose. Adding a look is a data entry; `pergolas-mx` renders the same routes under `outdoor-living` with its own palette and its own hero texture. Asserted in `tests/e2e/second-marketplace.spec.ts`.
+- [x] Webfonts are never a build dependency — Playfair Display and Plus Jakarta Sans are requested by the browser from the root layout, with serif/sans fallbacks in the tokens. `next build` performs no font fetch.
+- [x] Navigation is configuration, not code — `nav` in `marketplace.yaml`, validated to site-relative paths and anchors, rejecting `#` and off-site URLs. Pérgolas lists no blog entry and `features.blog: false` makes `/blog`, `/blog/[slug]` and `/llms.txt` return 404 there, so the sauna corpus cannot surface under another brand. 4 unit tests plus 2 browser tests.
+- [x] No public link is a placeholder — asserted across `/`, `/directorio`, `/cotizar` and `/gracias` in `tests/e2e/public-site.spec.ts`.
+- [x] The hero conversion card does not fork the intake path — it is presentational, derives its question and the real step count (9, not the mockup's 4) from the questionnaire config, and its CTA navigates to `/cotizar`. Asserted in E2E.
+- [x] The questionnaire keeps its behaviour through the restyle — same test IDs, same client and server validation, same POST to `/api/marketplaces/[slug]/projects`, same idempotency key, same consent capture, same `/gracias` redirect. The full consumer journey in `tests/e2e/journey.spec.ts` is unchanged and passes.
+- [x] An article's lead card cannot bypass consent — it is a GET form to `/cotizar`; only a well-formed five-digit postal code survives, validated server-side in the route and again by the intake API. A malformed `?cp=` is dropped, not echoed. Asserted in E2E.
+- [x] `/directorio` shows only providers approved on the resolved marketplace — scope is enforced in SQL in `src/modules/provider/public-queries.ts`. A pending provider and another marketplace's providers never appear. 7 integration tests plus 3 browser tests.
+- [x] The verification badge reflects `provider_profile.verification_status`, not decoration — a provider with documents submitted is not shown as verified.
+- [x] No fabricated public claim — coverage is the provider's own territories, service tags resolve through the questionnaire's own labels, and the result count is the real count. The handoff's wood, delivery-time, warranty, rating and "24 fabricantes" controls are **deliberately not implemented**: no column backs them. Filters and sort are region, service and name/recency, all of which do.
+- [x] The public read model exposes no contact details — asserted structurally in `tests/integration/public-directory.test.ts`.
+- [x] Explainer copy makes no medical claim — the heat/cold section describes what each modality asks of the installation and points readers to a health professional. Copy lives in a content block, so it is editable without a deploy.
+- [x] Media placeholders cannot be mistaken for photography — abstract striped surfaces with a visible caption naming the pending shot, and an `aria-label` for the logo slot. Swapping in `next/image` at the same aspect ratio causes no layout shift.
+- [x] Public pages fit a 360px phone with no horizontal overflow — asserted for `/`, `/directorio`, `/cotizar`, `/gracias` and `/blog`.
+- [x] `/directorio` is indexable only when it has earned it — production, plus the marketplace's own `defaultIndexing`, plus at least two approved providers; filtered views are always `noindex`. Verified locally as `noindex` outside production.
+- [ ] An accessibility audit has been run — focus styles, semantics, labels, `aria-live` errors and `prefers-reduced-motion` are implemented and spot-checked, but no automated audit (axe/Lighthouse) has been executed. Tracked under the production-readiness gate.
+- [ ] Real photography and video are in place — every image slot is still a placeholder.
+
 ## Second-marketplace gate
 
 - [x] `pergolas-mx` is generated from a template — `npm run marketplace:create` was used to generate a third marketplace, which validated on the first run and was then removed.
 - [x] Shared app renders it without a category-specific route.
-- [x] Questionnaire options differ through config — `terrace/garden/rooftop` versus `indoor/outdoor`.
+- [x] Questionnaire options differ through config — `terrace/garden/rooftop` versus `indoor/outdoor`, each with its own consumer-facing Spanish label ("Terraza", "Bajo techo").
+- [x] No consumer ever sees a raw option key — a string option must declare an explicit `label`; only numeric options (capacity `2`, `4`, `6`) may stand alone. Enforced by `optionValue` in `src/modules/marketplace-config/schema.ts`, so `npm run config:validate` fails before a bare key can ship. Guarded across every configured marketplace in `tests/unit/marketplace-config.test.ts`.
 - [x] Matching dimensions differ through config — `answer_mapping.service` is `material` here and `type` for saunas.
 - [x] Provider identity can participate in both marketplaces — Grupo Exterior MX.
 - [x] Shared tests pass for both configurations.
