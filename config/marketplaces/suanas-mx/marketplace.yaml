@@ -30,8 +30,11 @@ nav:
     href: /#ciencia
   - label: Blog
     href: /blog
-  - label: Biblioteca
-    href: /biblioteca
+# Biblioteca is deliberately absent from the menu until the first resources are
+# approved — /biblioteca is live, but an empty section in the nav reads as a
+# broken site. Restore the entry once the library has content.
+#  - label: Biblioteca
+#    href: /biblioteca
 # The one public contact point. The footer, the contact page and the privacy
 # notice all read this — change it here and it changes everywhere.
 contact:
