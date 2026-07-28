@@ -75,6 +75,8 @@ localization:
 theme: warm-wellness
 questionnaire: ./questionnaire.json
 matching: ./matching.yaml
+contact:
+  email: hola@example.com
 features:
   providerPortal: true
 seo:
@@ -160,6 +162,52 @@ describe('marketplace config loader', () => {
     });
     const { issues } = loadMarketplaceConfigsSafe(root);
     expect(issues.join('\n')).toContain('nav.0.href');
+  });
+
+  it('refuses a marketplace with no contact address', () => {
+    // A site that collects a name and a phone number has to say where to write
+    // to get them deleted. Missing contact must fail the build, not default.
+    const root = makeRoot({
+      bad: {
+        marketplace: marketplaceYaml('bad', 'bad.example').replace('contact:\n  email: hola@example.com\n', ''),
+      },
+    });
+    const { issues } = loadMarketplaceConfigsSafe(root);
+    expect(issues.join('\n')).toContain('contact');
+  });
+
+  it('rejects a contact address that is not an email', () => {
+    const root = makeRoot({
+      bad: {
+        marketplace: marketplaceYaml('bad', 'bad.example').replace('hola@example.com', 'escríbenos por instagram'),
+      },
+    });
+    const { issues } = loadMarketplaceConfigsSafe(root);
+    expect(issues.join('\n')).toContain('contact.email');
+  });
+
+  it('defaults social handles to null rather than guessing a profile URL', () => {
+    const [config] = loadMarketplaceConfigs(makeRoot({ 'no-social': {} }));
+    expect(config!.contact.social).toEqual({ instagram: null, tiktok: null });
+  });
+
+  it('carries a social handle through as a bare handle, not a URL', () => {
+    const root = makeRoot({
+      social: {
+        marketplace: marketplaceYaml('social', 'social.example').replace(
+          '  email: hola@example.com',
+          '  email: hola@example.com\n  social:\n    instagram: saunasmx',
+        ),
+      },
+    });
+    const [config] = loadMarketplaceConfigs(root);
+    expect(config!.contact.social.instagram).toBe('saunasmx');
+    expect(config!.contact.social.tiktok).toBeNull();
+  });
+
+  it('reads the real saunas.mx contact address from configuration', () => {
+    const suanas = loadMarketplaceConfigs().find((config) => config.slug === 'suanas-mx')!;
+    expect(suanas.contact.email).toBe('tecnologiasstellar@gmail.com');
   });
 
   it('normalizes select options to string values', () => {

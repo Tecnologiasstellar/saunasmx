@@ -56,7 +56,12 @@ export default async function PlaceProfile({ params }: { params: Params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
-      <DirectoryProfilePage profile={data.profile} related={data.related} indexLabel="Lugares" />
+      <DirectoryProfilePage
+        profile={data.profile}
+        related={data.related}
+        indexLabel="Lugares"
+        contactEmail={data.config.contact.email}
+      />
       <SiteFooter config={data.config} />
     </>
   );

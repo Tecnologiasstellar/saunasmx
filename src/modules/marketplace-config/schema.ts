@@ -46,6 +46,27 @@ export const marketplaceFileSchema = z.strictObject({
       }),
     )
     .default([]),
+  /**
+   * The public contact point. Required, because a marketplace that collects
+   * personal data must tell people where to write to correct or delete it —
+   * the privacy notice and the footer both read this one value rather than
+   * each hardcoding an address that can drift out of sync.
+   */
+  contact: z.strictObject({
+    email: z.email('must be a valid email address'),
+    /**
+     * Social handles, stored bare (`saunasmx`, not a URL) so the profile URL is
+     * built in one place. A network left null renders as a plain, unlinked icon
+     * marked "próximamente": the brand shows its intent to be there without the
+     * site shipping a link to a profile that does not exist.
+     */
+    social: z
+      .strictObject({
+        instagram: z.string().min(1).nullable().default(null),
+        tiktok: z.string().min(1).nullable().default(null),
+      })
+      .default({ instagram: null, tiktok: null }),
+  }),
   features: z.record(z.string().regex(/^[a-z][A-Za-z0-9]*$/), z.boolean()),
   seo: z.strictObject({
     defaultIndexing: z.boolean(),

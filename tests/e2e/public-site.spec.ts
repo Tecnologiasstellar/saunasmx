@@ -139,3 +139,46 @@ test('the directory is not indexable outside production', async ({ page }) => {
   const robots = await page.locator('meta[name="robots"]').getAttribute('content');
   expect(robots ?? '').toContain('noindex');
 });
+
+test('the footer carries the configured contact address, not a personal one', async ({ page }) => {
+  await page.goto('/');
+  const footer = page.getByRole('contentinfo');
+
+  await expect(footer.getByRole('link', { name: 'tecnologiasstellar@gmail.com' })).toBeVisible();
+  // The address this replaced. Anywhere on the page, not just the footer:
+  // it was hardcoded in three files and each one had to stop repeating it.
+  await expect(page.locator('body')).not.toContainText('albertovillalpando');
+});
+
+test('social icons show the brands without linking to profiles that do not exist', async ({ page }) => {
+  await page.goto('/');
+  const footer = page.getByRole('contentinfo');
+
+  // Visible, so the brand reads as present on both networks...
+  await expect(footer.getByLabel('Instagram — próximamente')).toBeVisible();
+  await expect(footer.getByLabel('TikTok — próximamente')).toBeVisible();
+
+  // ...but not anchors, because there is no account to link to yet. A guessed
+  // profile URL would 404 on someone else's site.
+  await expect(footer.locator('a[href*="instagram.com"]')).toHaveCount(0);
+  await expect(footer.locator('a[href*="tiktok.com"]')).toHaveCount(0);
+});
+
+test('every footer destination resolves', async ({ page }) => {
+  await page.goto('/');
+  const hrefs = await page.getByRole('contentinfo').locator('a[href^="/"]').evaluateAll((links) =>
+    [...new Set(links.map((link) => link.getAttribute('href')!))],
+  );
+  expect(hrefs.length, 'the footer links nowhere').toBeGreaterThan(4);
+
+  for (const href of hrefs) {
+    const response = await page.goto(href);
+    expect(response?.status(), `${href} is linked from the footer but does not resolve`).toBeLessThan(400);
+  }
+});
+
+test('the contact page hands over the address', async ({ page }) => {
+  await page.goto('/contacto');
+  await expect(page.getByRole('heading', { name: 'Contacto', level: 1 })).toBeVisible();
+  await expect(page.locator('a[href="mailto:tecnologiasstellar@gmail.com"]').first()).toBeVisible();
+});

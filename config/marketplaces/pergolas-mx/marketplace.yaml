@@ -18,6 +18,14 @@ nav:
     href: /proveedores
   - label: Guía
     href: /#guia
+# The one public contact point, read by the footer, the contact page and the
+# privacy notice. Separate from saunas.mx on purpose: a second marketplace can
+# route its mail somewhere else without touching code.
+contact:
+  email: tecnologiasstellar@gmail.com
+  social:
+    instagram: null
+    tiktok: null
 features:
   providerProfiles: true
   providerPortal: true

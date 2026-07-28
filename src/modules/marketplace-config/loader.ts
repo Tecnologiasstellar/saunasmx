@@ -164,6 +164,7 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
     localization: file.localization,
     themeKey: file.theme,
     nav: file.nav,
+    contact: file.contact,
     features: file.features,
     seo: file.seo,
     questionnaire,

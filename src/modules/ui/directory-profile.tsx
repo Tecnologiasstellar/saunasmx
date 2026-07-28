@@ -96,11 +96,14 @@ export function DirectoryProfilePage({
   profile,
   related,
   indexLabel,
+  contactEmail,
 }: {
   profile: DirectoryProfileView;
   related: DirectoryProfileView[];
   /** "Lugares" or "Proveedores" — the label of this kind's index in the breadcrumb. */
   indexLabel: string;
+  /** Where "report an update" goes. From marketplace config, never hardcoded. */
+  contactEmail: string;
 }) {
   const cross = CROSS_LINK[profile.kind];
   const crumbs: Crumb[] = [
@@ -258,7 +261,7 @@ export function DirectoryProfilePage({
                 </Link>
               ) : null}
               <a
-                href={`mailto:albertovillalpando@gmail.com?subject=${encodeURIComponent(`Actualización de ${profile.name} en saunas.mx`)}`}
+                href={`mailto:${contactEmail}?subject=${encodeURIComponent(`Actualización de ${profile.name} en saunas.mx`)}`}
                 className="text-[var(--ink-muted)] hover:text-[var(--brand)] hover:underline"
               >
                 Reportar una actualización
