@@ -53,6 +53,13 @@ export const marketplaceFileSchema = z.strictObject({
    * each hardcoding an address that can drift out of sync.
    */
   contact: z.strictObject({
+    /**
+     * Who legally operates this marketplace. The privacy notice names it as the
+     * responsable for the data collected, so it must be the entity that would
+     * answer an ARCO request — not a brand name and not a person standing in
+     * for a company.
+     */
+    legalName: z.string().min(1),
     email: z.email('must be a valid email address'),
     /**
      * Social handles, stored bare (`saunasmx`, not a URL) so the profile URL is

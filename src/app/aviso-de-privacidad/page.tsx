@@ -27,7 +27,7 @@ export default async function PrivacyNoticePage() {
 
           <h2 className="mt-8 text-xl font-semibold">Responsable</h2>
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
-            {config.name} es operado por Alberto Villalpando. Aún no contamos con un domicilio físico registrado para
+            {config.name} es operado por {config.contact.legalName}. Aún no contamos con un domicilio físico registrado para
             atención al público; el contacto es exclusivamente por correo electrónico a{' '}
             <a className="underline" href={`mailto:${config.contact.email}`}>
               {config.contact.email}

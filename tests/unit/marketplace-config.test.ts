@@ -76,6 +76,7 @@ theme: warm-wellness
 questionnaire: ./questionnaire.json
 matching: ./matching.yaml
 contact:
+  legalName: Test SA de CV
   email: hola@example.com
 features:
   providerPortal: true
@@ -169,7 +170,10 @@ describe('marketplace config loader', () => {
     // to get them deleted. Missing contact must fail the build, not default.
     const root = makeRoot({
       bad: {
-        marketplace: marketplaceYaml('bad', 'bad.example').replace('contact:\n  email: hola@example.com\n', ''),
+        marketplace: marketplaceYaml('bad', 'bad.example').replace(
+          'contact:\n  legalName: Test SA de CV\n  email: hola@example.com\n',
+          '',
+        ),
       },
     });
     const { issues } = loadMarketplaceConfigsSafe(root);
@@ -208,6 +212,15 @@ describe('marketplace config loader', () => {
   it('reads the real saunas.mx contact address from configuration', () => {
     const suanas = loadMarketplaceConfigs().find((config) => config.slug === 'suanas-mx')!;
     expect(suanas.contact.email).toBe('tecnologiasstellar@gmail.com');
+  });
+
+  it('names a company as the operator, never a private individual', () => {
+    // The privacy notice prints this as the "responsable". It used to be a
+    // personal name hardcoded into the page; no marketplace may reintroduce one.
+    for (const config of loadMarketplaceConfigs()) {
+      expect(config.contact.legalName).toBe('Tecnologías Stellar');
+      expect(config.contact.legalName.toLowerCase()).not.toContain('villalpando');
+    }
   });
 
   it('normalizes select options to string values', () => {
