@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { type Photo, photoCredit, photoFocus, photoSrc } from './photos';
 
 /**
  * Public presentation primitives.
@@ -164,32 +166,50 @@ export function Badge({ children }: { children: React.ReactNode }) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Stand-in for photography that has not been shot yet.
+ * A catalogue photo in a fixed aspect ratio.
  *
- * It is deliberately abstract and always carries a visible caption naming the
- * shot it is waiting for, so nobody — sighted or using a screen reader — can
- * mistake it for a real photograph. Replacing it later means swapping this
- * element for `next/image` with the same aspect ratio; no layout shift.
+ * The frame owns the ratio and the image fills it, so a portrait source and a
+ * landscape source both drop into the same slot with no layout shift. Where the
+ * crop lands is the photo's own `focus`, not a global default — see photos.ts.
+ *
+ * `credit` is off by default: a photographer line under every thumbnail in a
+ * three-up grid is noise. Turn it on for the large, standalone images.
  */
-export function MediaPlaceholder({
-  caption,
+export function PhotoFigure({
+  photo,
   ratio = 'aspect-video',
+  sizes,
   className = '',
-  children,
+  priority = false,
+  credit = false,
 }: {
-  caption: string;
+  photo: Photo;
   ratio?: string;
+  sizes: string;
   className?: string;
-  children?: React.ReactNode;
+  priority?: boolean;
+  credit?: boolean;
 }) {
   return (
     <figure className={`m-0 ${className}`}>
-      <div
-        className={`placeholder-media relative flex ${ratio} items-center justify-center overflow-hidden rounded-[var(--radius-card)]`}
-      >
-        <figcaption className="px-4 text-center font-mono text-xs text-[var(--ink-subtle)]">{caption}</figcaption>
-        {children}
+      {/* The dark backdrop is what shows while the image decodes, so a slow
+          connection sees the theme rather than a white flash. */}
+      <div className={`relative ${ratio} overflow-hidden rounded-[var(--radius-card)] bg-[var(--surface-dark)]`}>
+        <Image
+          src={photoSrc(photo)}
+          alt={photo.alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          className="object-cover"
+          style={{ objectPosition: photoFocus(photo) }}
+        />
       </div>
+      {credit ? (
+        <figcaption className="mt-2 font-mono text-[0.6875rem] text-[var(--ink-subtle)]">
+          {photoCredit(photo)}
+        </figcaption>
+      ) : null}
     </figure>
   );
 }

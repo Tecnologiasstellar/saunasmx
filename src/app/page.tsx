@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { listRecentPosts } from '@/db/queries';
@@ -7,7 +8,8 @@ import { serviceLabels } from '@/modules/marketplace-config/labels';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProviders } from '@/modules/provider/public-queries';
 import { resolveRequestHost } from '@/modules/site/context';
-import { ButtonLink, Card, Chip, Container, Eyebrow, MediaPlaceholder, SectionHeading } from '@/modules/ui/primitives';
+import { HERO_PHOTO, articlePhotos, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
+import { ButtonLink, Card, Chip, Container, Eyebrow, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
 import { QuizPreview } from '@/modules/ui/quiz-preview';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 import { SupplierCard } from '@/modules/ui/supplier-card';
@@ -45,6 +47,8 @@ export default async function LandingPage() {
   const faq = blocks.map((block) => (block.blockType === 'faq' ? asFaq(block.content) : null)).find(Boolean);
 
   const labels = serviceLabels(config);
+  // Assigned as a set so the two cards in this row never show the same photo.
+  const articleImages = articlePhotos(articles.map((article) => article.slug));
 
   return (
     <>
@@ -53,15 +57,23 @@ export default async function LandingPage() {
       <main>
         {/* HERO ------------------------------------------------------------ */}
         <section className="relative flex min-h-[80vh] flex-col justify-end overflow-hidden bg-[var(--surface-dark)] pb-14 pt-24 text-[var(--brand-ink)] lg:min-h-[92vh] lg:pb-[72px]">
-          {/* Stand-in for the hero photograph. Abstract on purpose: it is not a
-              photo and must not be read as one. */}
-          <div className="placeholder-wood absolute inset-0" aria-hidden="true" />
+          {/* Decorative: the headline carries the meaning, so an empty alt keeps a
+              screen reader from reading out a stock photo before the h1. */}
+          <Image
+            src={photoSrc(HERO_PHOTO)}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            style={{ objectPosition: photoFocus(HERO_PHOTO) }}
+          />
           <div
             aria-hidden="true"
             className="absolute inset-0 bg-[linear-gradient(0deg,rgba(12,14,16,0.92)_0%,rgba(12,14,16,0.45)_45%,rgba(12,14,16,0.15)_70%,rgba(12,14,16,0.35)_100%)]"
           />
-          <p className="absolute right-6 top-6 font-mono text-[0.6875rem] text-[color-mix(in_srgb,var(--brand-ink)_45%,transparent)]">
-            pendiente: fotografía de cabecera
+          <p className="absolute right-6 top-6 font-mono text-[0.6875rem] text-[color-mix(in_srgb,var(--brand-ink)_70%,transparent)] [text-shadow:0_1px_3px_rgb(0_0_0_/_0.6)]">
+            {photoCredit(HERO_PHOTO)}
           </p>
 
           <Container className="relative">
@@ -197,13 +209,17 @@ export default async function LandingPage() {
                     articles.length > 1 ? 'md:grid-cols-[1.1fr_1fr]' : 'md:max-w-[640px]'
                   }`}
                 >
-                  {articles.map((article) => (
+                  {articles.map((article, index) => (
                     <Link
                       key={article.slug}
                       href={`/blog/${article.slug}`}
                       className="group flex flex-col gap-4 text-inherit"
                     >
-                      <MediaPlaceholder caption="pendiente: imagen del artículo" className="lift" />
+                      <PhotoFigure
+                        photo={articleImages[index]!}
+                        sizes="(min-width: 768px) 45vw, 100vw"
+                        className="lift"
+                      />
                       <div>
                         <h3 className="text-xl font-semibold leading-snug group-hover:text-[var(--brand)]">
                           {article.title}

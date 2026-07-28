@@ -7,7 +7,8 @@ import { serviceLabels } from '@/modules/marketplace-config/labels';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProviders } from '@/modules/provider/public-queries';
 import { canonicalOrigin, isProduction, resolveRequestHost } from '@/modules/site/context';
-import { Container, Eyebrow, MediaPlaceholder, buttonClass } from '@/modules/ui/primitives';
+import { articlePhoto } from '@/modules/ui/photos';
+import { Container, Eyebrow, PhotoFigure, buttonClass } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 import { SupplierCard } from '@/modules/ui/supplier-card';
 
@@ -114,10 +115,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </Container>
 
         <Container className="pb-4">
-          <MediaPlaceholder
-            caption="pendiente: fotografía de portada del artículo"
+          <PhotoFigure
+            photo={articlePhoto(post.slug)}
             ratio="aspect-[21/9]"
+            sizes="(min-width: 1200px) 1200px, 100vw"
             className="max-w-[1200px]"
+            priority
+            credit
           />
         </Container>
 
