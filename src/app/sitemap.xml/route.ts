@@ -36,8 +36,15 @@ export async function GET() {
   const origin = canonicalOrigin(config);
 
   // nav is this marketplace's own list of what it publishes, so the sitemap can
-  // never advertise a route this tenant does not serve.
-  const paths = ['/', ...config.nav.map((link) => link.href).filter((href) => href.startsWith('/'))];
+  // never advertise a route this tenant does not serve. Anchors are dropped:
+  // "/#ciencia" is a section of the home page, not a separate URL, and listing
+  // it asks a crawler to index the same page twice.
+  const paths = [
+    '/',
+    // The questionnaire is the site's commercial endpoint and is not in nav.
+    '/cotizar',
+    ...config.nav.map((link) => link.href).filter((href) => href.startsWith('/') && !href.includes('#')),
+  ];
   if (config.features.blog && !paths.includes('/blog')) paths.push('/blog');
 
   const entries = [...new Set(paths)].map((path) => urlEntry(`${origin}${path === '/' ? '' : path}`));
