@@ -30,13 +30,16 @@ test('renders a distinct brand and theme from the shared code path', async ({ pa
 test('each marketplace links only to the sections it actually publishes', async ({ page }) => {
   await page.goto('/');
   const saunaNav = page.getByRole('navigation', { name: 'Principal' });
-  await expect(saunaNav.getByRole('link', { name: 'Directorio' })).toBeVisible();
+  // Saunas publishes both halves of the directory; pergolas has only providers.
+  await expect(saunaNav.getByRole('link', { name: 'Lugares para sauna' })).toBeVisible();
+  await expect(saunaNav.getByRole('link', { name: 'Construye tu sauna' })).toBeVisible();
   await expect(saunaNav.getByRole('link', { name: 'Ciencia' })).toBeVisible();
   await expect(saunaNav.getByRole('link', { name: 'Blog' })).toBeVisible();
 
   await page.goto(`${PERGOLAS}/`);
   const pergolaNav = page.getByRole('navigation', { name: 'Principal' });
-  await expect(pergolaNav.getByRole('link', { name: 'Directorio' })).toBeVisible();
+  await expect(pergolaNav.getByRole('link', { name: 'Proveedores' })).toBeVisible();
+  await expect(pergolaNav.getByRole('link', { name: 'Lugares para sauna' })).toHaveCount(0);
   // The editorial corpus is sauna-only, so this marketplace neither links to it…
   await expect(pergolaNav.getByRole('link', { name: 'Blog' })).toHaveCount(0);
   // …nor serves it.

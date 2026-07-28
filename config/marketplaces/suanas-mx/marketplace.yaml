@@ -19,8 +19,10 @@ matching: ./matching.yaml
 # Public header and footer links. Only destinations this marketplace actually
 # publishes — the shared chrome renders exactly what is listed here.
 nav:
-  - label: Directorio
-    href: /directorio
+  - label: Lugares para sauna
+    href: /lugares
+  - label: Construye tu sauna
+    href: /proveedores
   - label: Ciencia
     href: /#ciencia
   - label: Blog

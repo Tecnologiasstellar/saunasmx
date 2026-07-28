@@ -206,6 +206,21 @@ export async function submitProject(db: Database, args: SubmitArgs): Promise<Int
       { projectId, requirementKey: 'service_key', valueJson: serviceKey ?? null, source: 'derived' },
       { projectId, requirementKey: 'budget_range', valueJson: budget, source: 'derived' },
     );
+
+    // A provider the consumer asked for, recorded as a requirement the operator
+    // can see on the lead. Deliberately not an assignment: eligibility and
+    // routing stay where ADR-005 and ADR-008 put them, so arriving from a
+    // provider's page cannot buy that provider a lead it would not otherwise
+    // qualify for — and the provider may not even be onboarded yet.
+    if (input.preferredProviderSlug) {
+      requirementRows.push({
+        projectId,
+        requirementKey: 'preferred_provider',
+        valueJson: input.preferredProviderSlug,
+        source: 'consumer_preference',
+      });
+    }
+
     await tx.insert(projectRequirement).values(requirementRows);
 
     // 5. The original payload is preserved verbatim next to the structured values.

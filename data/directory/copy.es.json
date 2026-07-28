@@ -1,0 +1,297 @@
+{
+  "_comment": "Per-record Spanish copy, keyed by the research id. Every string here is a translation of that row's own source columns — admission_notes, price_details, installation_scope, delivery_scope, heater_types, featured_projects. Nothing is invented, no health claim is made, and where the research says a fact is unconfirmed this copy says so too. `accessNote` overrides the generic sentence the access_model would otherwise produce; omit it when the generic one already says everything. `blurb` overrides the templated one-liner, which is built from venue/supplier type plus city and therefore collides whenever two businesses share both — four contrast studios in CDMX, six manufacturers in CDMX. A directory whose cards repeat the same sentence teaches visitors to stop reading them. Once imported these become editable database columns: fixing a listing is an operator edit, not a code change.",
+  "mxp-001": {
+    "blurb": "Estudio de terapia de contraste con tres sedes en la Ciudad de México: sauna seca tradicional, infrarrojo y vapor, en formato social o privado.",
+    "priceNote": "Paquete inicial de $1,000 MXN por 3 sesiones de 60 min en Condesa o Lomas; versión privada $2,000 MXN por 3. Precios sujetos a cambio."
+  },
+  "mxp-002": {
+    "blurb": "Estudio de terapia de contraste en la Roma Norte, con sauna seca a 85 °C y ritual Aufguss sobre piedras calientes.",
+    "accessNote": "Reserva pública. Dos formatos: Quick Reset de 55 min y Deep Reset de 100 min.",
+    "priceNote": "Un evento público se listó en $700 MXN; confirma el precio de la sesión estándar en el flujo de reserva."
+  },
+  "mxp-003": {
+    "blurb": "Estudio de terapia de contraste en la Roma Norte, con sauna tradicional y tinas frías en sesión social o privada.",
+    "accessNote": "Sesiones sociales o privadas con reserva pública; también hay membresías.",
+    "priceNote": "Sauna social con tina fría $850 MXN; sesión privada $1,400 MXN."
+  },
+  "mxp-004": {
+    "blurb": "Estudio de terapia de contraste en un ático de Polanco, con ritual de sauna y baño de hielo.",
+    "accessNote": "Sesiones con reserva pública y membresías.",
+    "priceNote": "Sesión de 50 min $500 MXN; early bird $300 MXN; primera visita $450 MXN; 5 sesiones $2,250 MXN; membresía $3,000 MXN."
+  },
+  "mxp-005": {
+    "accessNote": "Pases de día y membresías. El lugar se plantea como un sistema de hábito, no como un spa de entrada casual.",
+    "priceNote": "Pase de día de 50 min, sauna o baño de hielo, $300 MXN; contraste de 50 min $500 MXN; de 90 min $700 MXN; membresías desde $2,000 MXN."
+  },
+  "mxp-006": {
+    "accessNote": "Solo adultos. La página de amenidades indica que el sauna con cromoterapia está en el área de hombres; confirma las condiciones al reservar.",
+    "priceNote": "Pase de día para externos $1,200 MXN; acceso a áreas húmedas para huéspedes $900 MXN."
+  },
+  "mxp-007": {
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-008": {
+    "accessNote": "Reserva pública. Es una sauna móvil: confirma que siga en la ubicación indicada antes de ir.",
+    "priceNote": "Sesión de una hora reservable en línea; el precio sólo aparece en el flujo de reserva."
+  },
+  "mxp-009": {
+    "accessNote": "Personas que no se hospedan pueden reservar con anticipación. Edad mínima 16 años.",
+    "priceNote": "Circuito de áreas húmedas: 30 min $700 MXN; 50 min $1,000 MXN; 70 min $1,300 MXN; 90 min $1,600 MXN."
+  },
+  "mxp-010": {
+    "priceNote": "Sesión de recuperación $400 MXN; 4 sesiones $1,400 MXN; 8 sesiones $2,400 MXN."
+  },
+  "mxp-011": {
+    "accessNote": "La ficha turística lo describe como resort y resort de día; confirma la reserva directa y el acceso para visitantes externos.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-012": {
+    "accessNote": "Solo adultos. Abierto a huéspedes y al público en general.",
+    "priceNote": "Se describe una sesión hidrotermal de 50 min previa al masaje; precio no publicado."
+  },
+  "mxp-013": {
+    "accessNote": "El modelo de acceso del gimnasio necesita confirmación directa.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-014": {
+    "accessNote": "Confirma si el spa admite visitantes externos o si es sólo para huéspedes.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-015": {
+    "accessNote": "El club anuncia apertura en 2026; confirma que ya esté operando antes de ir.",
+    "priceNote": "Membresías desde $1,999 MXN al mes."
+  },
+  "mxp-016": {
+    "priceNote": "El precio varía según el paquete."
+  },
+  "mxp-017": {
+    "accessNote": "Confirma el acceso para visitantes externos y la ruta exacta de reserva.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-018": {
+    "accessNote": "El spa toma citas individuales y de grupo; confirma el acceso a instalaciones para quienes no se hospedan.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-019": {
+    "accessNote": "Confirma si aceptan reservas de personas que no se hospedan.",
+    "priceNote": "Se menciona una sesión de sauna con baño de hielo; precio no publicado."
+  },
+  "mxp-020": {
+    "accessNote": "Confirma el acceso al spa para visitantes externos.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-021": {
+    "accessNote": "Membresías y eventos; la reserva directa se hace por Gloflox.",
+    "priceNote": "La fuente muestra precios de membresía, incluidos $1,000 MXN y un plan anual de $35,000 MXN; confirma la duración del plan en el flujo de reserva."
+  },
+  "mxp-022": {
+    "accessNote": "Confirma la reserva del spa y el acceso a instalaciones para quienes no se hospedan.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-023": {
+    "accessNote": "No necesitas membresía para el pase de día.",
+    "priceNote": "Pase de día 37 USD por persona; membresía mensual con precio promocional de 333 USD. Precios publicados en dólares."
+  },
+  "mxp-024": {
+    "accessNote": "Sólo renta del lugar completo, hasta 20 personas.",
+    "priceNote": "Precio bajo solicitud."
+  },
+  "mxp-025": {
+    "accessNote": "Confirma el acceso al spa para quienes no se hospedan en las villas.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-026": {
+    "accessNote": "El acceso se describe al reservar un tratamiento; confirma la disponibilidad para quienes no se hospedan.",
+    "priceNote": "El acceso se describe como cortesía únicamente al reservar un tratamiento."
+  },
+  "mxp-027": {
+    "priceNote": "Se lista un circuito de 60 min con sauna, alberca de hidromasaje y vapor aromático; precio no publicado."
+  },
+  "mxp-028": {
+    "accessNote": "Se requiere reserva. Las áreas hidrotermales están separadas por género. Confirma si el circuito se puede reservar por separado.",
+    "priceNote": "La Ceremonia del Agua se lista como cortesía con un tratamiento de 50 min o más; el menú indica 80 USD por día de uso."
+  },
+  "mxp-029": {
+    "accessNote": "La página oficial ofrece el Aqua Retreat Day Pass con acceso a saunas y áreas húmedas.",
+    "priceNote": "Precio del Aqua Retreat Day Pass bajo solicitud."
+  },
+  "mxp-030": {
+    "accessNote": "El pase de día está ofrecido de forma explícita y tiene cargo adicional.",
+    "priceNote": "Pase de día de hidroterapia; precio no publicado."
+  },
+  "mxp-031": {
+    "accessNote": "Confirma si hay acceso de spa de día o si es sólo con tratamiento.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-032": {
+    "accessNote": "Las reservas se hacen por Guest Services con menos de 24 horas de anticipación; confirma el acceso para quienes no se hospedan.",
+    "priceNote": "Sauna de hasta 60 minutos; precio bajo solicitud."
+  },
+  "mxp-033": {
+    "blurb": "Spa de resort en San José del Cabo, con un área de Fitness Recovery que suma sauna, tina fría y vapor.",
+    "accessNote": "El área de Fitness Recovery con sauna y tina fría es sólo con reserva; confirma el acceso para visitantes externos.",
+    "priceNote": "Aplica cargo; precio no publicado."
+  },
+  "mxp-034": {
+    "blurb": "Spa de resort en Cabo San Lucas, con sauna, vapor y albercas de inmersión fría y caliente.",
+    "accessNote": "Confirma las condiciones de reserva y de uso del área térmica para quienes no se hospedan.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-035": {
+    "blurb": "Spa de resort en Cabo San Lucas, con sauna, vapor, dos hidromasajes de hidroterapia y dos tinas frías individuales.",
+    "accessNote": "La página oficial indica que personas que no se hospedan pueden agendar cita con tarjeta de crédito.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-036": {
+    "blurb": "Spa de resort en San José del Cabo, con sauna, vapor, alberca e hidroterapia.",
+    "accessNote": "Confirma la política de reserva del spa para visitantes externos.",
+    "priceNote": "Precio no publicado."
+  },
+  "mxp-037": {
+    "priceNote": "Sesión de vapor o sauna $140 MXN por 20 min; servicio de sauna linfático $580 MXN por 45 min."
+  },
+  "mxp-038": {
+    "accessNote": "Disponible para visitantes y huéspedes con reserva previa.",
+    "priceNote": "Tiene cargo adicional; precio no publicado."
+  },
+  "mxp-039": {
+    "accessNote": "Confirma el acceso al spa para quienes no se hospedan.",
+    "priceNote": "El sauna tiene cargo adicional; precio no publicado."
+  },
+  "mx-001": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México, con fundación fechada en 1970 y obra en hoteles, clubes deportivos y spas.",
+    "serviceNote": "Diseño, fabricación, instalación, reparación y mantenimiento.",
+    "accessNote": "Declara cobertura en todo México y capacidad de proyecto en América del Norte y del Sur.",
+    "heaterNote": "Unidad eléctrica con piedra volcánica. La estufa a leña no está confirmada públicamente."
+  },
+  "mx-002": {
+    "serviceNote": "Fabricación a la medida; publica condiciones de envío. Conviene confirmar el alcance de instalación.",
+    "accessNote": "Declara envío dentro de México; la cobertura de instalación no está claramente establecida.",
+    "heaterNote": "Unidades térmicas de acero inoxidable de 2 a 15 kW hechas en México. La estufa a leña no está confirmada."
+  },
+  "mx-003": {
+    "serviceNote": "Diseño, fabricación, instalación, mantenimiento y reparación.",
+    "accessNote": "Declara cobertura en los 32 estados del país.",
+    "heaterNote": "Unidad de fabricación nacional con piedra volcánica. La estufa a leña no está confirmada."
+  },
+  "mx-004": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México, con presencia en Juriquilla, Querétaro, para proyectos residenciales y comerciales.",
+    "serviceNote": "Venta, fabricación a la medida, instalación, servicio y refacciones.",
+    "accessNote": "Declara instalación en todo México; conviene confirmarlo directamente.",
+    "heaterNote": "Unidades térmicas eléctricas. La página principal no especifica el uso de piedras."
+  },
+  "mx-005": {
+    "blurb": "Fabricante e instalador de saunas a la medida en Xochimilco, con cabinas forradas en madera y unidad de calor con piedra volcánica.",
+    "serviceNote": "Diseño, fabricación e instalación de sauna y vapor.",
+    "accessNote": "No publica su cobertura; confirma si atiende tu estado antes de cotizar.",
+    "heaterNote": "Unidad con piedra volcánica, guarda de protección y control digital. La estufa a leña no está confirmada."
+  },
+  "mx-006": {
+    "serviceNote": "Diseño, fabricación, instalación y garantía.",
+    "accessNote": "Declara instalación en todo México.",
+    "heaterNote": "Calentadores eléctricos listados de forma explícita. No confirma opciones de piedra volcánica ni de leña."
+  },
+  "mx-007": {
+    "serviceNote": "Del diseño a la instalación, con mantenimiento y soporte.",
+    "accessNote": "Declara servicio en cualquier parte de México.",
+    "heaterNote": "Calor seco tradicional con piedras calientes, además de una línea híbrida con infrarrojo. La estufa a leña no está confirmada."
+  },
+  "mx-008": {
+    "blurb": "Fabricante e instalador de saunas a la medida en Xochimilco; su sitio presenta a Sports World y Betterware entre sus clientes.",
+    "serviceNote": "Fabricación, proyecto, reparación, servicio y mantenimiento.",
+    "accessNote": "Declara cobertura en toda la República.",
+    "heaterNote": "Ofrece servicio de equipos, pero no expone públicamente el tipo de estufa ni el uso de piedras."
+  },
+  "mx-009": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México, en álamo, cedro rojo y nogal, con refacciones y posventa.",
+    "serviceNote": "Diseño, fabricación, instalación, posventa, refacciones y mantenimiento.",
+    "accessNote": "Declara servicio en todo México.",
+    "heaterNote": "Ofrece sauna tradicional, pero no especifica el calentador ni las piedras en el texto accesible."
+  },
+  "mx-010": {
+    "serviceNote": "Diseño, fabricación, instalación, mantenimiento y refacciones.",
+    "accessNote": "Declara cobertura nacional, con presencia en Querétaro, Cancún y ciudades de proyecto.",
+    "heaterNote": "Unidad térmica con piedra volcánica y componentes eléctricos. La estufa a leña no está confirmada."
+  },
+  "mx-011": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México, con más de 30 años declarados y modelos interior, exterior, de barril y colectivo.",
+    "serviceNote": "Diseño, fabricación, instalación, reparación, mantenimiento y garantías.",
+    "accessNote": "Declara servicio en todo México.",
+    "heaterNote": "Sistemas propios eléctricos y de gas para vapor, además de piedras para sauna. El detalle de la unidad de sauna no es del todo público."
+  },
+  "mx-012": {
+    "serviceNote": "Fabricación, venta y servicio. Conviene confirmar el alcance de entrega e instalación.",
+    "accessNote": "Una ficha de directorio menciona entrega a domicilio; la instalación nacional no está verificada.",
+    "heaterNote": "Unidades térmicas importadas con control electrónico. La estufa a leña no está confirmada."
+  },
+  "mx-013": {
+    "blurb": "Fabricante e instalador de saunas a la medida en Guadalajara, con operación fechada en 1988 en su ficha de directorio.",
+    "serviceNote": "Fabricación, instalación y mantenimiento.",
+    "accessNote": "La cobertura nacional aparece en una ficha de terceros, no en el sitio oficial.",
+    "heaterNote": "Generadores de vapor eléctricos. El equipo de sauna no está del todo expuesto."
+  },
+  "mx-014": {
+    "blurb": "Fabricante e instalador de saunas a la medida en Guadalajara, especializado en baños de sauna a medida y baños finlandeses individuales.",
+    "serviceNote": "Fabricación, venta y mantenimiento.",
+    "accessNote": "Cobertura declarada en Guadalajara y Jalisco; no declara entrega nacional.",
+    "heaterNote": "Generadores eléctricos y equipo de sauna. No confirma detalles de piedras ni de estufa."
+  },
+  "mx-015": {
+    "serviceNote": "Diseño, adaptación, instalación, mantenimiento y garantía.",
+    "accessNote": "La evidencia pública es de Puebla; no declara entrega a nivel nacional.",
+    "heaterNote": "La galería muestra un calentador con piedras tradicionales. El calentamiento eléctrico se infiere; la estufa a leña no está confirmada."
+  },
+  "mx-016": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México y Monterrey, y uno de los pocos del directorio que publica precios de sus modelos.",
+    "serviceNote": "Fabricación, venta, medidas a la medida y servicio.",
+    "accessNote": "Tiene ubicaciones en Ciudad de México y Monterrey; la cobertura nacional no está verificada.",
+    "heaterNote": "Unidades térmicas de acero inoxidable con piedra volcánica y control digital. La estufa a leña no está confirmada.",
+    "priceNote": "Publica modelos desde $19,200 hasta $105,000 MXN; el modelo de 3.00 × 2.00 × 2.00 m aparece en $105,000 MXN."
+  },
+  "mx-017": {
+    "serviceNote": "Diseño y cotización, suministro de equipo, integración de proyecto y mantenimiento.",
+    "accessNote": "Tiene presencia en México; la entrega e instalación nacional no está claramente establecida.",
+    "heaterNote": "Calentadores eléctricos Finnleo con piedras. La estufa a leña no está confirmada."
+  },
+  "mx-018": {
+    "serviceNote": "Declara diseño, fabricación e instalación.",
+    "accessNote": "Presencia en Ciudad de México y en Toluca-Metepec; la entrega nacional no está verificada.",
+    "heaterNote": "Resistencias eléctricas que calientan piedras. La estufa a leña no está confirmada."
+  },
+  "mx-019": {
+    "blurb": "Fabricante e instalador de saunas a la medida en la Ciudad de México, en operación desde 1980.",
+    "serviceNote": "Fabricación, venta, instalación y mantenimiento.",
+    "accessNote": "La disponibilidad se confirma ciudad por ciudad; no garantiza cobertura nacional.",
+    "heaterNote": "Sistemas de sauna y vapor. No expone públicamente el tipo de calentador ni el uso de piedras."
+  },
+  "mx-020": {
+    "serviceNote": "Diseño, fabricación e instalación.",
+    "accessNote": "Declara cobertura en todo México.",
+    "heaterNote": "No especifica públicamente el tipo de calentador ni de estufa."
+  },
+  "mx-021": {
+    "serviceNote": "Diseño, construcción, instalación y mantenimiento.",
+    "accessNote": "Indica servicio en Guadalajara y Jalisco; no declara entrega nacional.",
+    "heaterNote": "No especifica el calentador. Su evidencia pública es de carpintería más que de ingeniería de sauna."
+  },
+  "mx-022": {
+    "serviceNote": "Diseño, construcción, equipamiento y mantenimiento.",
+    "accessNote": "Tiene varias sucursales en Querétaro; no declara entrega nacional.",
+    "heaterNote": "Usa piedra de olivino finlandesa en sus sistemas. El tipo exacto de calentador no está declarado."
+  },
+  "mx-023": {
+    "serviceNote": "Diseño e instalación, según la ficha de proyecto.",
+    "accessNote": "Cobertura sin verificar.",
+    "heaterNote": "Se menciona una unidad de calor; el tipo de estufa no está especificado."
+  },
+  "mx-024": {
+    "serviceNote": "Diseño, fabricación, instalación, mantenimiento y reparación, según la ficha pública.",
+    "accessNote": "La ficha lista entrega en Ciudad de México; la entrega nacional no está verificada.",
+    "heaterNote": "Equipos de calentamiento y generadores; no declara el detalle de piedras ni de estufa."
+  },
+  "mx-025": {
+    "serviceNote": "Fabricación y diseño.",
+    "accessNote": "No declara cobertura.",
+    "heaterNote": "No expone el tipo de calentador ni de estufa."
+  }
+}

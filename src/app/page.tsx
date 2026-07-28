@@ -4,15 +4,15 @@ import { notFound } from 'next/navigation';
 import { listRecentPosts } from '@/db/queries';
 import { asBullets, asColumns, asFaq, asHero, getPublishedPage } from '@/modules/content/queries';
 import { getDb } from '@/modules/database/client';
-import { serviceLabels } from '@/modules/marketplace-config/labels';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
-import { listPublicProviders } from '@/modules/provider/public-queries';
+import { listPublicProfiles } from '@/modules/directory/queries';
+import { toProfileViews } from '@/modules/directory/view-model';
 import { resolveRequestHost } from '@/modules/site/context';
 import { HERO_PHOTO, articlePhotos, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
 import { ButtonLink, Card, Chip, Container, Eyebrow, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
 import { QuizPreview } from '@/modules/ui/quiz-preview';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
-import { SupplierCard } from '@/modules/ui/supplier-card';
+import { DirectoryCard } from '@/modules/ui/directory-card';
 
 /**
  * Public landing page. One template, every marketplace.
@@ -36,7 +36,7 @@ export default async function LandingPage() {
 
   const [page, providers, articles] = await Promise.all([
     getPublishedPage(db, marketplaceId, 'landing', 'home'),
-    listPublicProviders(db, marketplaceId, { limit: FEATURED_SUPPLIERS }),
+    listPublicProfiles(db, marketplaceId, 'provider', { limit: FEATURED_SUPPLIERS }),
     config.features.blog ? listRecentPosts(FEATURED_ARTICLES) : Promise.resolve([]),
   ]);
 
@@ -46,7 +46,6 @@ export default async function LandingPage() {
   const columns = blocks.map((block) => (block.blockType === 'columns' ? asColumns(block.content) : null)).find(Boolean);
   const faq = blocks.map((block) => (block.blockType === 'faq' ? asFaq(block.content) : null)).find(Boolean);
 
-  const labels = serviceLabels(config);
   // Assigned as a set so the two cards in this row never show the same photo.
   const articleImages = articlePhotos(articles.map((article) => article.slug));
 
@@ -123,19 +122,19 @@ export default async function LandingPage() {
           <Container>
             <SectionHeading
               eyebrow="Directorio de proveedores"
-              title={`Proveedores aprobados en ${config.name}`}
+              title={`Proveedores de saunas en ${config.name}`}
             />
 
             {providers.length > 0 ? (
               <>
                 <ul className="mt-11 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
-                  {providers.map((provider) => (
-                    <li key={provider.id} className="flex">
-                      <SupplierCard provider={provider} serviceLabels={labels} />
+                  {toProfileViews(providers).map((provider) => (
+                    <li key={provider.slug} className="flex">
+                      <DirectoryCard profile={provider} />
                     </li>
                   ))}
                 </ul>
-                <ButtonLink href="/directorio" variant="quiet" className="mt-10">
+                <ButtonLink href="/proveedores" variant="quiet" className="mt-10">
                   Ver el directorio completo
                 </ButtonLink>
               </>

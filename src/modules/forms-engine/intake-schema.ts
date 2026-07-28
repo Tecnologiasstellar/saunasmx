@@ -120,6 +120,22 @@ export function buildIntakeSchema(config: MarketplaceConfig) {
         landingPath: z.string().trim().max(500).optional(),
       })
       .default({}),
+    /**
+     * The directory profile the consumer arrived from, when they started at a
+     * provider's page.
+     *
+     * It is a preference, not an assignment. Matching still runs its own
+     * eligibility rules and an operator still routes the lead (ADR-005,
+     * ADR-008) — a slug in a query string must never be able to hand a lead to
+     * a provider who is not approved, in territory and within capacity. Shape
+     * is constrained to a slug so the value is safe to store and display.
+     */
+    preferredProviderSlug: z
+      .string()
+      .trim()
+      .max(80)
+      .regex(/^[a-z0-9-]+$/, 'Proveedor no válido')
+      .optional(),
     idempotencyKey: z.string().trim().min(8).max(200),
   });
 }

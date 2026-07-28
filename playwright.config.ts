@@ -15,7 +15,10 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: `npm run db:reset && npm run db:seed && npx next dev --port ${PORT}`,
+    // The directory import runs here too: `/lugares` and `/proveedores` are
+    // public routes now, and testing them against an empty table would prove
+    // nothing about the records visitors actually see.
+    command: `npm run db:reset && npm run db:seed && npm run directory:import -- --apply && npx next dev --port ${PORT}`,
     port: PORT,
     reuseExistingServer: false,
     timeout: 180_000,

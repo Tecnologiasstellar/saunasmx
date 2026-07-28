@@ -88,6 +88,18 @@ h3 {
   );
 }
 
+/* Directory profiles carry no photograph, by decision rather than by omission.
+   The research package licenses no image of any venue or workshop it lists, and
+   a stock sauna placed beside a named business reads as a photograph of that
+   business — the exact confusion src/modules/ui/photos.ts exists to prevent. A
+   monogram on a brand-tinted field is honest, renders instantly, and never
+   shifts the layout. Replace it per profile once a venue grants us an image. */
+.profile-canvas {
+  background:
+    radial-gradient(115% 115% at 18% 12%, color-mix(in srgb, var(--brand-soft) 92%, transparent), transparent 62%),
+    linear-gradient(150deg, var(--surface-muted), var(--brand-soft));
+}
+
 /* Blog article body. Replaces @tailwindcss/typography — the generated markdown
    only ever emits these elements, so a plugin would be dead weight. */
 .article-body {

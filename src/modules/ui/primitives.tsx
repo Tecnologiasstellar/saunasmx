@@ -38,14 +38,19 @@ export function Eyebrow({
   tone = 'brand',
   as: Tag = 'p',
   className = '',
+  id,
 }: {
   children: React.ReactNode;
   tone?: Tone;
   as?: 'p' | 'span' | 'h2';
   className?: string;
+  /** Set when the eyebrow is the heading a section is labelled by. */
+  id?: string;
 }) {
   return (
-    <Tag className={`text-[0.6875rem] font-bold uppercase tracking-[0.15em] ${TONE[tone]} ${className}`}>{children}</Tag>
+    <Tag id={id} className={`text-[0.6875rem] font-bold uppercase tracking-[0.15em] ${TONE[tone]} ${className}`}>
+      {children}
+    </Tag>
   );
 }
 

@@ -44,7 +44,7 @@ export default async function ThanksPage() {
 
             <div className="mt-9 flex flex-wrap gap-4">
               <ButtonLink href="/">Volver al inicio</ButtonLink>
-              <ButtonLink href="/directorio" variant="quiet">
+              <ButtonLink href="/proveedores" variant="quiet">
                 Ver el directorio
               </ButtonLink>
             </div>

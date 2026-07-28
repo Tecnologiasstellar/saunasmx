@@ -91,12 +91,17 @@ No database server, container or cloud account is needed: with `DATABASE_URL`
 unset the app runs PostgreSQL embedded in-process (ADR-010).
 
 ```bash
-npm install && cp .env.example .env.local && npm run db:reset && npm run db:seed && npm run dev
+npm install && cp .env.example .env.local && npm run db:reset && npm run db:seed && npm run directory:import -- --apply && npm run dev
 ```
 
 Then open `http://localhost:3000` (Suanas) and `http://pergolas.localhost:3000`
 (Pérgolas) — two marketplaces, one codebase, distinguished only by
 `config/marketplaces/*`.
+
+The directory import loads the researched sauna venues and suppliers from
+`data/directory/` into `directory_profile`, which is what `/lugares` and
+`/proveedores` render. It is a dry run without `--apply`, and safe to re-run —
+see `data/directory/README.md`.
 
 Seeded accounts, all synthetic: `operator@example.com` for `/ops` and
 `/ops/planes`, `owner.nordic@example.com` for `/portal` and `/portal/cobertura`. Sign-in is a magic link; outside
@@ -130,6 +135,12 @@ Phases 0–4 of `docs/12-implementation-plan.md` are built and tested, plus the
 second-marketplace proof from phase 7: config-driven foundation, questionnaire
 runtime, project intake, operator review, deterministic matching and
 assignment, and the provider pipeline through quote and outcome.
+
+On top of that, a public directory: one `directory_profile` entity renders both
+sauna venues (`/lugares`) and sauna suppliers (`/proveedores`) through a single
+page template and card. A venue's call to action is its own booking route; a
+supplier's is `/cotizar`, so the highest-value lead stays inside the consented
+intake pipeline instead of leaving the site.
 
 Deferred with reasons recorded in `docs/13-acceptance-criteria.md`: the
 commercial engine (phase 5), the AI gateway (phase 6), WhatsApp, Payload CMS,

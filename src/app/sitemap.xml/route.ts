@@ -1,4 +1,7 @@
 import { listRecentPosts } from '@/db/queries';
+import { getDb } from '@/modules/database/client';
+import { listPublicPaths } from '@/modules/directory/queries';
+import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { canonicalOrigin, isProduction, resolveRequestHost } from '@/modules/site/context';
 
 /**
@@ -46,6 +49,12 @@ export async function GET() {
     ...config.nav.map((link) => link.href).filter((href) => href.startsWith('/') && !href.includes('#')),
   ];
   if (config.features.blog && !paths.includes('/blog')) paths.push('/blog');
+
+  // Every public directory profile. The query applies the same publication and
+  // evidence predicate as the pages themselves, so a draft listing or a
+  // `verify` record can never be advertised to a crawler from here.
+  const db = await getDb();
+  paths.push(...(await listPublicPaths(db, await getMarketplaceId(db, config.slug))));
 
   const entries = [...new Set(paths)].map((path) => urlEntry(`${origin}${path === '/' ? '' : path}`));
 
