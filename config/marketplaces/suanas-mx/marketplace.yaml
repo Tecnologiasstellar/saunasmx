@@ -30,6 +30,9 @@ nav:
 # The one public contact point. The footer, the contact page and the privacy
 # notice all read this — change it here and it changes everywhere.
 contact:
+  # Named as the "responsable" in the privacy notice — the entity that answers
+  # an ARCO request.
+  legalName: Tecnologías Stellar
   email: tecnologiasstellar@gmail.com
   # Bare handles, no URLs and no @. Leave a network null until the account
   # actually exists: the icon still shows, marked "próximamente", instead of

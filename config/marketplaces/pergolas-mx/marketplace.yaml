@@ -22,6 +22,9 @@ nav:
 # privacy notice. Separate from saunas.mx on purpose: a second marketplace can
 # route its mail somewhere else without touching code.
 contact:
+  # Named as the "responsable" in the privacy notice — the entity that answers
+  # an ARCO request.
+  legalName: Tecnologías Stellar
   email: tecnologiasstellar@gmail.com
   social:
     instagram: null

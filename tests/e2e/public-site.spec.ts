@@ -145,9 +145,24 @@ test('the footer carries the configured contact address, not a personal one', as
   const footer = page.getByRole('contentinfo');
 
   await expect(footer.getByRole('link', { name: 'tecnologiasstellar@gmail.com' })).toBeVisible();
-  // The address this replaced. Anywhere on the page, not just the footer:
-  // it was hardcoded in three files and each one had to stop repeating it.
-  await expect(page.locator('body')).not.toContainText('albertovillalpando');
+});
+
+test('the owner personal identity appears nowhere on the public site', async ({ page }) => {
+  // The address was hardcoded in three files and the personal name in a
+  // fourth. Checked per page, because each one carried a different piece:
+  // the footer had the address, the privacy notice had both, and the
+  // directory profiles had the address in a mailto.
+  for (const path of ['/', '/contacto', '/aviso-de-privacidad', '/lugares/koti-wellness', '/proveedores/sauna-steam']) {
+    await page.goto(path);
+    const body = page.locator('body');
+    await expect(body, `${path} still shows the personal address`).not.toContainText('albertovillalpando');
+    await expect(body, `${path} still shows the personal name`).not.toContainText('Villalpando');
+  }
+});
+
+test('the privacy notice names the company as responsable', async ({ page }) => {
+  await page.goto('/aviso-de-privacidad');
+  await expect(page.getByText('es operado por Tecnologías Stellar')).toBeVisible();
 });
 
 test('social icons show the brands without linking to profiles that do not exist', async ({ page }) => {

@@ -64,7 +64,7 @@ export type NavLink = { label: string; href: string };
 export type SocialHandles = { instagram: string | null; tiktok: string | null };
 
 /** Where the public writes to us, and where they can find us. */
-export type Contact = { email: string; social: SocialHandles };
+export type Contact = { legalName: string; email: string; social: SocialHandles };
 
 export type MarketplaceConfig = {
   id: string;
