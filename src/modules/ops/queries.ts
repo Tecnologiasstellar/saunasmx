@@ -81,7 +81,12 @@ export type LeadDetail = {
   qualificationStatus: string;
   createdAt: Date;
   consumer: { name: string; email: string; phone: string | null };
-  location: { postalCode: string; city: string | null; stateCode: string | null } | null;
+  location: { postalCode: string; city: string | null; stateCode: string | null; streetAddress: string | null } | null;
+  leadScore: number | null;
+  leadGrade: string | null;
+  leadScoreReasons: string[] | null;
+  contactValidationStatus: string;
+  contactConfirmedAt: Date | null;
   requirements: Array<{ key: string; value: unknown; source: string }>;
   consents: Array<{ purpose: string; granted: boolean; policyVersion: string; capturedAt: Date }>;
   history: Array<{ fromStatus: string | null; toStatus: string; reason: string | null; actorType: string; createdAt: Date }>;
@@ -131,8 +136,18 @@ export async function getLeadDetail(db: Database, marketplaceId: string, leadId:
     createdAt: row.lead.createdAt,
     consumer: { name: row.consumer.name, email: row.consumer.email, phone: row.consumer.phone },
     location: row.location
-      ? { postalCode: row.location.postalCode, city: row.location.city, stateCode: row.location.stateCode }
+      ? {
+          postalCode: row.location.postalCode,
+          city: row.location.city,
+          stateCode: row.location.stateCode,
+          streetAddress: row.location.streetAddress,
+        }
       : null,
+    leadScore: row.lead.leadScore,
+    leadGrade: row.lead.leadGrade,
+    leadScoreReasons: Array.isArray(row.lead.leadScoreReasons) ? (row.lead.leadScoreReasons as string[]) : null,
+    contactValidationStatus: row.lead.contactValidationStatus,
+    contactConfirmedAt: row.lead.contactConfirmedAt,
     requirements: requirements.map((requirement) => ({
       key: requirement.requirementKey,
       value: requirement.valueJson,

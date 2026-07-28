@@ -30,6 +30,12 @@ export const marketplaceFileSchema = z.strictObject({
   questionnaire: z.string().min(1),
   matching: z.string().min(1),
   /**
+   * Optional filename for a lead-scoring config (see lead-scoring module).
+   * Absent by default — a marketplace that omits it gets no lead grading, with
+   * no branch anywhere keyed on which marketplace this is.
+   */
+  lead_scoring: z.string().min(1).optional(),
+  /**
    * Public header/footer links. Each marketplace lists only the destinations it
    * actually has, so a shared header can never render a link to a section this
    * marketplace does not publish. The primary "cotizar" CTA is not listed here:
@@ -114,20 +120,76 @@ const stepBase = {
   help: z.string().optional(),
 };
 
+/**
+ * A field bundled into a `group` step. Several of these render on one screen —
+ * one visual "Paso" — instead of the usual one-field-per-step. Field ids
+ * `postal_code`, `city`, `state`, `street_address` route into the intake
+ * payload's `location` object instead of into the generic `answers` bag; this
+ * is a naming convention any marketplace can use, not a category-specific
+ * branch (see LOCATION_FIELD_IDS in questionnaire-form.tsx).
+ */
+const groupFieldBase = {
+  id: z.string().regex(KEY),
+  label: z.string().min(1),
+  required: z.boolean().default(false),
+  /** Only rendered/required when another field in the same step has this answer. */
+  showIf: z
+    .strictObject({
+      field: z.string().regex(KEY),
+      equals: z.string().min(1).optional(),
+      notEquals: z.string().min(1).optional(),
+    })
+    .optional(),
+};
+
+export const groupFieldSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    ...groupFieldBase,
+    kind: z.literal('text'),
+    placeholder: z.string().optional(),
+    /** A regex source string, e.g. `^\\d{5}$` for a postal code field. */
+    pattern: z.string().optional(),
+    patternMessage: z.string().optional(),
+  }),
+  z.strictObject({ ...groupFieldBase, kind: z.literal('select'), options: z.array(optionValue).min(2) }),
+]);
+
+const CONSENT_PURPOSES = z.enum(['lead_contact', 'provider_sharing']);
+
 export const questionnaireStepSchema = z.discriminatedUnion('type', [
   z.strictObject({ ...stepBase, type: z.literal('postal_code') }),
   z.strictObject({ ...stepBase, type: z.literal('single_select'), options: z.array(optionValue).min(2) }),
   z.strictObject({ ...stepBase, type: z.literal('multi_select'), options: z.array(optionValue).min(2) }),
   z.strictObject({ ...stepBase, type: z.literal('long_text'), maxLength: z.number().int().min(1).max(10_000).default(2000) }),
-  z.strictObject({ ...stepBase, type: z.literal('contact'), fields: z.array(z.enum(['name', 'email', 'phone'])).min(1) }),
+  z.strictObject({
+    ...stepBase,
+    type: z.literal('contact'),
+    fields: z.array(z.enum(['name', 'email', 'phone'])).min(1),
+    /** Overrides the rendered phone-field label, e.g. "WhatsApp". Defaults to "Teléfono". */
+    phoneLabel: z.string().min(1).optional(),
+    /**
+     * When present, both required consent checkboxes render on this same
+     * screen instead of a separate `consent` step. Must cover both purposes
+     * exactly once — see the file-level superRefine below.
+     */
+    consents: z.array(z.strictObject({ purpose: CONSENT_PURPOSES, label: z.string().min(1) })).optional(),
+  }),
   z.strictObject({ ...stepBase, type: z.literal('consent') }),
+  z.strictObject({ ...stepBase, type: z.literal('group'), fields: z.array(groupFieldSchema).min(2) }),
 ]);
+
+/** Flattens group-step fields alongside top-level steps for id/type lookups. */
+function flattenFields(steps: z.infer<typeof questionnaireStepSchema>[]) {
+  return steps.flatMap((step) => (step.type === 'group' ? step.fields.map((field) => ({ step, field })) : []));
+}
 
 export const questionnaireFileSchema = z
   .strictObject({
     id: z.string().regex(SLUG),
     version: z.number().int().positive(),
     locale: z.string().min(2),
+    /** Text for the final step's submit button. Defaults to the platform's original copy. */
+    submitLabel: z.string().min(1).default('Enviar proyecto'),
     steps: z.array(questionnaireStepSchema).min(1),
   })
   .superRefine((value, ctx) => {
@@ -137,15 +199,68 @@ export const questionnaireFileSchema = z
         ctx.addIssue({ code: 'custom', path: ['steps', index, 'id'], message: `duplicate step id "${step.id}"` });
       }
       seen.add(step.id);
+      if (step.type === 'group') {
+        for (const [fieldIndex, field] of step.fields.entries()) {
+          if (seen.has(field.id)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['steps', index, 'fields', fieldIndex, 'id'],
+              message: `duplicate field id "${field.id}"`,
+            });
+          }
+          seen.add(field.id);
+        }
+      }
     }
+
+    const groupFields = flattenFields(value.steps);
+    for (const [index, step] of value.steps.entries()) {
+      if (step.type !== 'group') continue;
+      for (const [fieldIndex, field] of step.fields.entries()) {
+        if (!field.showIf) continue;
+        const known = step.fields.some((candidate) => candidate.id === field.showIf!.field);
+        if (!known) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['steps', index, 'fields', fieldIndex, 'showIf', 'field'],
+            message: `showIf references unknown field "${field.showIf.field}" — it must be another field in the same group`,
+          });
+        }
+      }
+    }
+
     const count = (type: string) => value.steps.filter((s) => s.type === type).length;
     if (count('contact') !== 1) {
       ctx.addIssue({ code: 'custom', path: ['steps'], message: 'questionnaire must contain exactly one contact step' });
     }
-    if (count('consent') !== 1) {
+
+    const contactStep = value.steps.find((s) => s.type === 'contact');
+    const contactConsents = contactStep?.type === 'contact' ? (contactStep.consents ?? []) : [];
+    const consentStepCount = count('consent');
+
+    if (contactConsents.length > 0) {
+      if (consentStepCount > 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['steps'],
+          message: 'a questionnaire must capture consent either via a consent step or via consents on the contact step, not both',
+        });
+      }
+      const purposes = contactConsents.map((c) => c.purpose);
+      const hasBoth = purposes.includes('lead_contact') && purposes.includes('provider_sharing');
+      if (purposes.length !== 2 || !hasBoth) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['steps'],
+          message: 'the contact step\'s consents must cover exactly "lead_contact" and "provider_sharing", once each',
+        });
+      }
+    } else if (consentStepCount !== 1) {
       ctx.addIssue({ code: 'custom', path: ['steps'], message: 'questionnaire must contain exactly one consent step' });
     }
-    if (count('postal_code') < 1) {
+
+    const hasPostalCode = count('postal_code') >= 1 || groupFields.some(({ field }) => field.id === 'postal_code');
+    if (!hasPostalCode) {
       ctx.addIssue({ code: 'custom', path: ['steps'], message: 'questionnaire must collect a postal code for territory matching' });
     }
     const consentStep = value.steps.find((s) => s.type === 'consent');

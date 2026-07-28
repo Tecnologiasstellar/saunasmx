@@ -101,7 +101,7 @@ export type AssignmentDetail = {
   status: string;
   assignedAt: Date;
   expiresAt: Date | null;
-  location: { postalCode: string; city: string | null; stateCode: string | null } | null;
+  location: { postalCode: string; city: string | null; stateCode: string | null; streetAddress: string | null } | null;
   requirements: Array<{ key: string; value: unknown }>;
   /** Present only once the assignment has been accepted. */
   contact: { name: string; email: string; phone: string | null } | null;
@@ -156,7 +156,15 @@ export async function getAssignmentDetail(
     assignedAt: row.assignment.assignedAt,
     expiresAt: row.assignment.expiresAt,
     location: row.location
-      ? { postalCode: row.location.postalCode, city: row.location.city, stateCode: row.location.stateCode }
+      ? {
+          postalCode: row.location.postalCode,
+          city: row.location.city,
+          stateCode: row.location.stateCode,
+          // Withheld with the same "only after acceptance" rule as contact
+          // details — the exact address is not shared with an offered
+          // provider, only one that has actually accepted the project.
+          streetAddress: accepted ? row.location.streetAddress : null,
+        }
       : null,
     requirements: requirements.map((requirement) => ({ key: requirement.requirementKey, value: requirement.valueJson })),
     contact: accepted ? { name: row.consumer.name, email: row.consumer.email, phone: row.consumer.phone } : null,

@@ -1,0 +1,59 @@
+version: 1
+# Point tables are authored best-to-worst; grade rules below compare by that
+# order (see src/modules/lead-scoring/score.ts).
+completeness:
+  fields: [type, setting, capacity]
+  unsureValue: unsure
+  pointsComplete: 5
+  pointsPartial: 2
+dimensions:
+  - field: project_stage
+    points:
+      space_ready: 20
+      construction_or_remodel: 16
+      planning: 6
+      researching: 0
+  - field: professional_involved
+    points:
+      architect: 8
+      contractor: 8
+      both: 8
+      none: 0
+    pointsIfUnanswered: 0
+  - field: budget
+    points:
+      over_300000: 25
+      150000_300000: 22
+      100000_150000: 18
+      50000_100000: 10
+      under_50000: 0
+      unsure: 0
+  - field: timeline
+    points:
+      under_30_days: 25
+      one_to_three_months: 20
+      three_to_six_months: 10
+      over_six_months: 4
+      researching: 0
+  - field: decision_authority
+    points:
+      owner_primary: 15
+      owner_joint: 12
+      professional: 12
+      researching_for_other: 0
+contactBonus: 2
+grades:
+  - grade: A
+    minScore: 75
+    requireServiceable: true
+    minRank: { field: budget, atLeastAsGoodAs: 100000_150000 }
+    maxRank: { field: timeline, atLeastAsGoodAs: one_to_three_months }
+    fieldIn:
+      project_stage: [space_ready, construction_or_remodel]
+    fieldNotIn:
+      decision_authority: [researching_for_other]
+  - grade: B
+    minScore: 45
+    maxScore: 74
+    requireServiceable: true
+  - grade: C

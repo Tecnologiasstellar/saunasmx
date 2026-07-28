@@ -88,6 +88,19 @@ export async function assignProviders(db: Database, args: AssignArgs): Promise<A
       );
     }
 
+    // Grade C is never sold to a provider — it goes to nutrition/manual
+    // review instead. Structural, not just a UI convention: even though
+    // review_policy is manual today and nothing auto-assigns, this makes the
+    // rule hold regardless of how this function is called.
+    if (leadRow.leadGrade === 'C') {
+      throw new DomainError(
+        ERROR_CODES.LEAD_GRADE_NOT_ASSIGNABLE,
+        'This lead is graded C and is not assigned to providers automatically.',
+        409,
+        { leadGrade: leadRow.leadGrade },
+      );
+    }
+
     // Consent is a precondition for sharing, not a formality.
     const consents = await tx
       .select()

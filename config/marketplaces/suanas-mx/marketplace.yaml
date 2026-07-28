@@ -16,6 +16,9 @@ localization:
 theme: warm-wellness
 questionnaire: ./questionnaire.json
 matching: ./matching.yaml
+# Optional: grades every submitted lead A/B/C for sale to providers. Omitted by
+# pergolas-mx on purpose — see docs on lead-scoring config.
+lead_scoring: ./lead-scoring.yaml
 # Public header and footer links. Only destinations this marketplace actually
 # publishes — the shared chrome renders exactly what is listed here.
 nav:

@@ -224,27 +224,75 @@ describe('marketplace config loader', () => {
   });
 
   it('normalizes select options to string values', () => {
-    const suanas = loadMarketplaceConfigs().find((config) => config.slug === 'suanas-mx')!;
-    const capacity = suanas.questionnaire.steps.find((step) => step.id === 'capacity');
-    expect(capacity?.type).toBe('single_select');
-    if (capacity?.type !== 'single_select') throw new Error('unreachable');
+    const root = makeRoot({
+      'suanas-mx': {
+        questionnaire: {
+          ...VALID_QUESTIONNAIRE,
+          steps: VALID_QUESTIONNAIRE.steps.map((step) =>
+            step.id === 'budget' ? { ...step, options: [2, 4, { value: 'more_than_8', label: 'Más de 8' }] } : step,
+          ),
+        },
+      },
+    });
+    const suanas = loadMarketplaceConfigs(root).find((config) => config.slug === 'suanas-mx')!;
+    const budget = suanas.questionnaire.steps.find((step) => step.id === 'budget');
+    expect(budget?.type).toBe('single_select');
+    if (budget?.type !== 'single_select') throw new Error('unreachable');
     // The source JSON mixes numbers and labelled objects; storage keys must be strings.
-    expect(capacity.options.map((option) => option.value)).toEqual(['2', '4', '6', '8', 'more_than_8']);
+    expect(budget.options.map((option) => option.value)).toEqual(['2', '4', 'more_than_8']);
     // A number is its own label; a key is not.
-    expect(capacity.options.map((option) => option.label)).toEqual(['2', '4', '6', '8', 'Más de 8']);
+    expect(budget.options.map((option) => option.label)).toEqual(['2', '4', 'Más de 8']);
+  });
+
+  it('normalizes select options nested inside a group step, the same way', () => {
+    const root = makeRoot({
+      'suanas-mx': {
+        questionnaire: {
+          ...VALID_QUESTIONNAIRE,
+          steps: [
+            {
+              id: 'specs',
+              type: 'group',
+              label: 'Specs',
+              required: true,
+              fields: [
+                { id: 'capacity', kind: 'select', label: 'Capacidad', required: true, options: [2, 4, { value: 'more_than_8', label: 'Más de 8' }] },
+                { id: 'setting', kind: 'text', label: 'Ubicación', required: true },
+              ],
+            },
+            ...VALID_QUESTIONNAIRE.steps,
+          ],
+        },
+      },
+    });
+    const suanas = loadMarketplaceConfigs(root).find((config) => config.slug === 'suanas-mx')!;
+    const specs = suanas.questionnaire.steps.find((step) => step.id === 'specs');
+    if (specs?.type !== 'group') throw new Error('unreachable');
+    const capacity = specs.fields.find((field) => field.id === 'capacity');
+    if (capacity?.kind !== 'select') throw new Error('unreachable');
+    expect(capacity.options.map((option) => option.value)).toEqual(['2', '4', 'more_than_8']);
+    expect(capacity.options.map((option) => option.label)).toEqual(['2', '4', 'Más de 8']);
   });
 
   it('never shows a raw key to a consumer in any configured marketplace', () => {
     // The bug this guards: options shipped as bare keys, so the questionnaire
     // asked buyers to choose between "indoor" and "more_than_8".
+    function checkOptions(options: { value: string; label: string }[], where: string) {
+      for (const option of options) {
+        // Numeric options legitimately equal their label; keys must not.
+        if (/^\d+$/.test(option.value)) continue;
+        expect(option.label, `${where}/${option.value}`).not.toBe(option.value);
+        expect(option.label).not.toMatch(/_/);
+      }
+    }
     for (const config of loadMarketplaceConfigs()) {
       for (const step of config.questionnaire.steps) {
-        if (step.type !== 'single_select' && step.type !== 'multi_select') continue;
-        for (const option of step.options) {
-          // Numeric options legitimately equal their label; keys must not.
-          if (/^\d+$/.test(option.value)) continue;
-          expect(option.label, `${config.slug}/${step.id}/${option.value}`).not.toBe(option.value);
-          expect(option.label).not.toMatch(/_/);
+        if (step.type === 'single_select' || step.type === 'multi_select') {
+          checkOptions(step.options, `${config.slug}/${step.id}`);
+        } else if (step.type === 'group') {
+          for (const field of step.fields) {
+            if (field.kind === 'select') checkOptions(field.options, `${config.slug}/${step.id}/${field.id}`);
+          }
         }
       }
     }
@@ -389,5 +437,113 @@ describe('marketplace config loader', () => {
     roots.push(root);
     const { issues } = loadMarketplaceConfigsSafe(root);
     expect(issues.join('\n')).toContain('no marketplace directories');
+  });
+
+  describe('group steps', () => {
+    const GROUP_STEP = {
+      id: 'specs',
+      type: 'group',
+      label: 'Specs',
+      required: true,
+      fields: [
+        { id: 'type', kind: 'select', label: 'Tipo', required: true, options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] },
+        { id: 'setting', kind: 'text', label: 'Ubicación', required: true },
+      ],
+    };
+
+    it('accepts a valid group step with two or more fields', () => {
+      const questionnaire = { ...VALID_QUESTIONNAIRE, steps: [GROUP_STEP, ...VALID_QUESTIONNAIRE.steps] };
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues).toEqual([]);
+    });
+
+    it('rejects a group field with an unknown kind', () => {
+      const badGroup = { ...GROUP_STEP, fields: [{ id: 'foo', kind: 'checkbox', label: 'Foo', required: true }] };
+      const questionnaire = { ...VALID_QUESTIONNAIRE, steps: [badGroup, ...VALID_QUESTIONNAIRE.steps] };
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues.length).toBeGreaterThan(0);
+    });
+
+    it('rejects a duplicate field id even across different group steps', () => {
+      const questionnaire = { ...VALID_QUESTIONNAIRE, steps: [GROUP_STEP, { ...GROUP_STEP, id: 'specs2' }, ...VALID_QUESTIONNAIRE.steps] };
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues.join('\n')).toContain('duplicate field id "type"');
+    });
+
+    it('rejects a showIf that references a field outside the group', () => {
+      const badGroup = {
+        ...GROUP_STEP,
+        fields: [
+          { id: 'type', kind: 'select', label: 'Tipo', required: true, options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] },
+          { id: 'other', kind: 'text', label: 'Otro', required: true, showIf: { field: 'not_in_group', notEquals: 'x' } },
+        ],
+      };
+      const questionnaire = { ...VALID_QUESTIONNAIRE, steps: [badGroup, ...VALID_QUESTIONNAIRE.steps] };
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues.join('\n')).toContain('showIf references unknown field');
+    });
+
+    it('lets answer_mapping resolve into a select field nested in a group', () => {
+      const questionnaire = { ...VALID_QUESTIONNAIRE, steps: [GROUP_STEP, ...VALID_QUESTIONNAIRE.steps] };
+      const matching = VALID_MATCHING.replace('service: budget', 'service: type');
+      const root = makeRoot({ 'one-mx': { questionnaire, matching } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues).toEqual([]);
+    });
+  });
+
+  describe('dual consent on the contact step', () => {
+    function withContactConsents(consents: unknown) {
+      return {
+        ...VALID_QUESTIONNAIRE,
+        steps: VALID_QUESTIONNAIRE.steps
+          .filter((step) => step.type !== 'consent')
+          .map((step) => (step.type === 'contact' ? { ...step, consents } : step)),
+      };
+    }
+
+    it('accepts consents covering both purposes exactly once, with no separate consent step', () => {
+      const questionnaire = withContactConsents([
+        { purpose: 'lead_contact', label: 'Autorizo el contacto.' },
+        { purpose: 'provider_sharing', label: 'Autorizo compartir mi proyecto.' },
+      ]);
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues).toEqual([]);
+    });
+
+    it('rejects contact consents that repeat a purpose instead of covering both', () => {
+      const questionnaire = withContactConsents([
+        { purpose: 'lead_contact', label: 'Autorizo el contacto.' },
+        { purpose: 'lead_contact', label: 'Otra vez.' },
+      ]);
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues.join('\n')).toContain('lead_contact');
+    });
+
+    it('rejects a questionnaire with both a consent step and contact-step consents', () => {
+      const questionnaire = {
+        ...VALID_QUESTIONNAIRE,
+        steps: VALID_QUESTIONNAIRE.steps.map((step) =>
+          step.type === 'contact'
+            ? {
+                ...step,
+                consents: [
+                  { purpose: 'lead_contact', label: 'Autorizo el contacto.' },
+                  { purpose: 'provider_sharing', label: 'Autorizo compartir.' },
+                ],
+              }
+            : step,
+        ),
+      };
+      const root = makeRoot({ 'one-mx': { questionnaire } });
+      const { issues } = loadMarketplaceConfigsSafe(root);
+      expect(issues.join('\n')).toContain('not both');
+    });
   });
 });

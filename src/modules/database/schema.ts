@@ -105,6 +105,16 @@ export const leadLifecycleStatus = pgEnum('lead_lifecycle_status', [
 /** docs/06-workflows.md → Qualification */
 export const qualificationStatus = pgEnum('qualification_status', ['pending', 'qualified', 'review_required', 'incomplete', 'spam']);
 
+/** Sellable lead quality, computed at submission by an optional per-marketplace lead-scoring config. */
+export const leadGrade = pgEnum('lead_grade', ['A', 'B', 'C']);
+
+/** Human validation of a lead's WhatsApp/contact reachability — a grade A is never sold as "verified" before this. */
+export const contactValidationStatus = pgEnum('contact_validation_status', [
+  'pending_contact',
+  'contact_confirmed',
+  'unreachable',
+]);
+
 export const assignmentStatus = pgEnum('assignment_status', ['assigned', 'accepted', 'rejected', 'expired', 'withdrawn']);
 export const actorType = pgEnum('actor_type', ['consumer', 'provider_user', 'operator', 'system']);
 
@@ -508,6 +518,13 @@ export const projectLocation = pgTable('project_location', {
   city: text('city'),
   postalCode: text('postal_code').notNull(),
   propertyType: text('property_type'),
+  /**
+   * Optional, consumer-provided. Never used in automatic eligibility/matching
+   * and never leaves this table into analytics, logs, outbox payloads or
+   * notifications — visible only to an operator, and to an assigned provider
+   * after that provider accepts (see provider/queries.ts).
+   */
+  streetAddress: text('street_address'),
   createdAt: createdAt(),
 });
 
@@ -572,6 +589,12 @@ export const lead = pgTable(
     lifecycleStatus: leadLifecycleStatus('lifecycle_status').notNull().default('created'),
     qualificationStatus: qualificationStatus('qualification_status').notNull().default('pending'),
     qualifiedAt: timestamp('qualified_at', { withTimezone: true }),
+    /** Null when this marketplace has no lead-scoring config (see marketplace-config). */
+    leadScore: integer('lead_score'),
+    leadGrade: leadGrade('lead_grade'),
+    leadScoreReasons: jsonb('lead_score_reasons'),
+    contactValidationStatus: contactValidationStatus('contact_validation_status').notNull().default('pending_contact'),
+    contactConfirmedAt: timestamp('contact_confirmed_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (table) => [

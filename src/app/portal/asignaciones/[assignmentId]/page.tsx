@@ -57,6 +57,11 @@ export default async function AssignmentPage({ params }: { params: Promise<{ ass
             <p>{detail.contact.name}</p>
             <p className="text-[var(--ink-muted)]">{detail.contact.email}</p>
             <p className="text-[var(--ink-muted)]">{detail.contact.phone ?? '—'}</p>
+            {detail.location?.streetAddress ? (
+              <p className="text-[var(--ink-muted)]" data-testid="street-address">
+                {detail.location.streetAddress}
+              </p>
+            ) : null}
           </div>
         ) : (
           <p className="mt-2 text-sm text-[var(--ink-muted)]" data-testid="contact-hidden">

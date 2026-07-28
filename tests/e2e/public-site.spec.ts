@@ -23,11 +23,11 @@ test('the header CTA and the hero card both enter the real questionnaire', async
 
 test('the hero preview reports the questionnaire real length, not the mockup four steps', async ({ page }) => {
   await page.goto('/');
-  // config/marketplaces/suanas-mx/questionnaire.json has nine steps.
-  await expect(page.getByRole('complementary')).toContainText('9 pasos');
+  // config/marketplaces/suanas-mx/questionnaire.json (v2) has seven steps.
+  await expect(page.getByRole('complementary')).toContainText('7 pasos');
 
   await page.goto('/cotizar');
-  await expect(page.getByText('Paso 1 de 9')).toBeVisible();
+  await expect(page.getByText('Paso 1 de 7')).toBeVisible();
 });
 
 test('every photo on the public pages actually decodes', async ({ page }) => {
@@ -109,15 +109,17 @@ test('a card leads to the profile, and the profile CTA reaches the questionnaire
 });
 
 test('a postal code carried in from an article prefills the form and is still validated', async ({ page }) => {
+  // suanas-mx's location step is a "group" step (state/city/postal code/street);
+  // the postal code field's testid follows its config field id.
   await page.goto('/cotizar?cp=01000');
-  await expect(page.getByTestId('input-postal-code')).toHaveValue('01000');
+  await expect(page.getByTestId('input-postal_code')).toHaveValue('01000');
 
   // A malformed code is dropped rather than echoed into the field.
   await page.goto('/cotizar?cp=abc');
-  await expect(page.getByTestId('input-postal-code')).toHaveValue('');
+  await expect(page.getByTestId('input-postal_code')).toHaveValue('');
 
   await page.goto('/cotizar?cp=123');
-  await expect(page.getByTestId('input-postal-code')).toHaveValue('');
+  await expect(page.getByTestId('input-postal_code')).toHaveValue('');
   await page.getByTestId('next').click();
   await expect(page.getByTestId('form-error')).toBeVisible();
 });
