@@ -18,6 +18,16 @@
  * The Pexels license does not require attribution. We show the photographer
  * anyway: it is the credit they are owed, and it is also what tells a reader
  * the image is stock rather than ours.
+ *
+ * Need more images? `sauna-cold-therapy-photo-database.csv` in the repo root is
+ * the wider candidate pool these were chosen from — about twenty more frames
+ * with their Pexels pages and rights notes. Two warnings before pulling from
+ * it: its `title` column describes several photos wrongly (an ice bath that is
+ * really a salon basin, winter swimming that is really a man on his phone), so
+ * look at the frame before trusting the row; and it includes shots with a
+ * visible manufacturer's hardware, which this file deliberately excludes.
+ * Adding a row there does nothing on its own — a photo only reaches the site
+ * by being added to the catalogue below.
  */
 
 export type Photo = {
