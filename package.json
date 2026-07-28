@@ -22,6 +22,8 @@
     "bootstrap:production": "tsx scripts/bootstrap-production.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "directory:import": "tsx scripts/directory-import.ts",
+    "library:ingest": "tsx scripts/library-ingest.ts",
+    "library:seed": "tsx scripts/library-seed.ts",
     "config:validate": "tsx scripts/config-validate.ts",
     "marketplace:create": "tsx scripts/marketplace-create.ts",
     "photos:fetch": "tsx scripts/fetch-photos.ts",

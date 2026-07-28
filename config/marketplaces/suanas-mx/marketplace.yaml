@@ -30,6 +30,8 @@ nav:
     href: /#ciencia
   - label: Blog
     href: /blog
+  - label: Biblioteca
+    href: /biblioteca
 # The one public contact point. The footer, the contact page and the privacy
 # notice all read this — change it here and it changes everywhere.
 contact:
@@ -51,6 +53,7 @@ features:
   subscriptions: false
   successFees: false
   blog: true
+  library: true
 seo:
   defaultIndexing: true
   pageEligibility: provider_count_gte_2_and_local_value

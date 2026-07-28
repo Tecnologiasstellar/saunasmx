@@ -37,6 +37,7 @@ features:
   subscriptions: false
   successFees: false
   blog: false
+  library: false
 seo:
   defaultIndexing: false
   pageEligibility: provider_count_gte_2_and_local_value

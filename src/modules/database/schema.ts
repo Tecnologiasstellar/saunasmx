@@ -67,6 +67,61 @@ export const verificationStatus = pgEnum('verification_status', ['unverified', '
  */
 export const directoryKind = pgEnum('directory_kind', ['place', 'provider']);
 
+/** Curated library resources. These are deliberately separate from generated blog posts. */
+export const libraryResourceFormat = pgEnum('library_resource_format', [
+  'video',
+  'podcast_episode',
+  'book',
+  'article',
+  'research',
+  'report',
+  'course',
+]);
+export const libraryPlatform = pgEnum('library_platform', [
+  'youtube',
+  'spotify',
+  'rss',
+  'google_books',
+  'pubmed',
+  'website',
+]);
+export const libraryRightsStatus = pgEnum('library_rights_status', [
+  'official_embed',
+  'licensed',
+  'creator_approved',
+  'creative_commons',
+  'public_domain',
+  'link_only',
+  'pending',
+  'blocked',
+]);
+export const libraryWorkflowStatus = pgEnum('library_workflow_status', [
+  'discovered',
+  'enriched',
+  'needs_review',
+  'approved',
+  'scheduled',
+  'published',
+  'needs_revalidation',
+  'archived',
+  'rejected',
+]);
+export const libraryEvidenceLevel = pgEnum('library_evidence_level', [
+  'systematic_review',
+  'primary_research',
+  'qualified_expert',
+  'industry',
+  'lived_experience',
+  'commercial',
+  'unrated',
+]);
+export const libraryIngestionRunStatus = pgEnum('library_ingestion_run_status', [
+  'running',
+  'succeeded',
+  'partial',
+  'failed',
+]);
+
 /**
  * How well public evidence supports a directory record, from the research
  * package that seeds it. Distinct from publication: `core` is high-confidence
@@ -470,6 +525,233 @@ export const directoryProfile = pgTable(
     ),
     index('directory_profile_state_idx').on(table.marketplaceId, table.kind, table.state),
   ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* Curated knowledge library                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A person or institution whose official work is curated by the library.
+ * Library creators are editorial entities, never app users or transactional
+ * providers. A creator may later claim a profile without changing its identity.
+ */
+export const libraryCreator = pgTable(
+  'library_creator',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    summary: text('summary'),
+    credentials: text('credentials'),
+    countryCode: char('country_code', { length: 2 }),
+    languagesJson: jsonb('languages_json').notNull().default([]),
+    officialWebsiteUrl: text('official_website_url'),
+    profileImageUrl: text('profile_image_url'),
+    profileImageRights: libraryRightsStatus('profile_image_rights').notNull().default('pending'),
+    publicationStatus: contentStatus('publication_status').notNull().default('draft'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('library_creator_slug_key').on(table.marketplaceId, table.slug)],
+);
+
+/**
+ * An explicitly approved official account/feed. Discovery jobs may only run
+ * against rows where official_account and active are both true.
+ */
+export const libraryChannel = pgTable(
+  'library_channel',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    creatorId: uuid('creator_id').notNull().references(() => libraryCreator.id),
+    platform: libraryPlatform('platform').notNull(),
+    externalId: text('external_id').notNull(),
+    canonicalUrl: text('canonical_url').notNull(),
+    feedUrl: text('feed_url'),
+    /** Official-site page that proves this channel/feed belongs to the creator. */
+    verificationUrl: text('verification_url').notNull(),
+    officialAccount: boolean('official_account').notNull().default(false),
+    active: boolean('active').notNull().default(false),
+    lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('library_channel_external_key').on(table.marketplaceId, table.platform, table.externalId),
+    index('library_channel_poll_idx').on(table.marketplaceId, table.active, table.lastCheckedAt),
+  ],
+);
+
+export const libraryTopic = pgTable(
+  'library_topic',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    parentId: uuid('parent_id'),
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    publicationStatus: contentStatus('publication_status').notNull().default('draft'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('library_topic_slug_key').on(table.marketplaceId, table.slug),
+    index('library_topic_parent_idx').on(table.marketplaceId, table.parentId, table.sortOrder),
+  ],
+);
+
+/**
+ * One canonical resource regardless of medium. `source_official` is copied
+ * from the approved channel at ingestion and rechecked at publication time.
+ */
+export const libraryResource = pgTable(
+  'library_resource',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    sourceChannelId: uuid('source_channel_id').notNull().references(() => libraryChannel.id),
+    slug: text('slug').notNull(),
+    format: libraryResourceFormat('format').notNull(),
+    title: text('title').notNull(),
+    annotation: text('annotation'),
+    takeawaysJson: jsonb('takeaways_json').notNull().default([]),
+    language: text('language').notNull().default('es'),
+    canonicalUrl: text('canonical_url').notNull(),
+    embedUrl: text('embed_url'),
+    thumbnailUrl: text('thumbnail_url'),
+    externalPlatform: libraryPlatform('external_platform').notNull(),
+    externalId: text('external_id').notNull(),
+    durationSeconds: integer('duration_seconds'),
+    externalPublishedAt: timestamp('external_published_at', { withTimezone: true }),
+    rightsStatus: libraryRightsStatus('rights_status').notNull().default('pending'),
+    evidenceLevel: libraryEvidenceLevel('evidence_level').notNull().default('unrated'),
+    workflowStatus: libraryWorkflowStatus('workflow_status').notNull().default('discovered'),
+    sourceOfficial: boolean('source_official').notNull().default(false),
+    featured: boolean('featured').notNull().default(false),
+    metadataJson: jsonb('metadata_json').notNull().default({}),
+    metadataHash: text('metadata_hash').notNull(),
+    sourceFetchedAt: timestamp('source_fetched_at', { withTimezone: true }).notNull().defaultNow(),
+    lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
+    nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('library_resource_slug_key').on(table.marketplaceId, table.slug),
+    uniqueIndex('library_resource_external_key').on(table.marketplaceId, table.externalPlatform, table.externalId),
+    uniqueIndex('library_resource_canonical_key').on(table.marketplaceId, table.canonicalUrl),
+    index('library_resource_public_idx').on(
+      table.marketplaceId,
+      table.workflowStatus,
+      table.sourceOfficial,
+      table.externalPublishedAt,
+    ),
+    index('library_resource_review_idx').on(table.marketplaceId, table.workflowStatus, table.nextReviewAt),
+  ],
+);
+
+export const libraryResourceCreator = pgTable(
+  'library_resource_creator',
+  {
+    id: id(),
+    resourceId: uuid('resource_id').notNull().references(() => libraryResource.id),
+    creatorId: uuid('creator_id').notNull().references(() => libraryCreator.id),
+    role: text('role').notNull().default('creator'),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (table) => [
+    uniqueIndex('library_resource_creator_key').on(table.resourceId, table.creatorId, table.role),
+    index('library_resource_creator_order_idx').on(table.resourceId, table.sortOrder),
+  ],
+);
+
+export const libraryResourceTopic = pgTable(
+  'library_resource_topic',
+  {
+    id: id(),
+    resourceId: uuid('resource_id').notNull().references(() => libraryResource.id),
+    topicId: uuid('topic_id').notNull().references(() => libraryTopic.id),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    confidence: integer('confidence'),
+  },
+  (table) => [
+    uniqueIndex('library_resource_topic_key').on(table.resourceId, table.topicId),
+    index('library_resource_topic_topic_idx').on(table.topicId, table.resourceId),
+  ],
+);
+
+export const libraryCollection = pgTable(
+  'library_collection',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    slug: text('slug').notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    estimatedMinutes: integer('estimated_minutes'),
+    publicationStatus: contentStatus('publication_status').notNull().default('draft'),
+    featured: boolean('featured').notNull().default(false),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('library_collection_slug_key').on(table.marketplaceId, table.slug)],
+);
+
+export const libraryCollectionItem = pgTable(
+  'library_collection_item',
+  {
+    id: id(),
+    collectionId: uuid('collection_id').notNull().references(() => libraryCollection.id),
+    resourceId: uuid('resource_id').notNull().references(() => libraryResource.id),
+    editorNote: text('editor_note'),
+    sortOrder: integer('sort_order').notNull(),
+  },
+  (table) => [
+    uniqueIndex('library_collection_item_key').on(table.collectionId, table.resourceId),
+    uniqueIndex('library_collection_item_order_key').on(table.collectionId, table.sortOrder),
+  ],
+);
+
+export const libraryIngestionRun = pgTable(
+  'library_ingestion_run',
+  {
+    id: id(),
+    channelId: uuid('channel_id').notNull().references(() => libraryChannel.id),
+    status: libraryIngestionRunStatus('status').notNull().default('running'),
+    discoveredCount: integer('discovered_count').notNull().default(0),
+    insertedCount: integer('inserted_count').notNull().default(0),
+    updatedCount: integer('updated_count').notNull().default(0),
+    skippedCount: integer('skipped_count').notNull().default(0),
+    error: text('error'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (table) => [index('library_ingestion_run_channel_idx').on(table.channelId, table.startedAt)],
+);
+
+export const libraryEditorialReview = pgTable(
+  'library_editorial_review',
+  {
+    id: id(),
+    resourceId: uuid('resource_id').notNull().references(() => libraryResource.id),
+    reviewerId: uuid('reviewer_id').references(() => appUser.id),
+    decision: libraryWorkflowStatus('decision').notNull(),
+    note: text('note'),
+    rightsVerified: boolean('rights_verified').notNull().default(false),
+    sourceVerifiedOfficial: boolean('source_verified_official').notNull().default(false),
+    claimsReviewed: boolean('claims_reviewed').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (table) => [index('library_editorial_review_resource_idx').on(table.resourceId, table.createdAt)],
 );
 
 /* -------------------------------------------------------------------------- */

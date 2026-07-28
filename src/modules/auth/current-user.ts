@@ -26,6 +26,13 @@ export async function requireOperator(returnTo = '/ops'): Promise<Session> {
   return session;
 }
 
+export async function requireContentEditor(returnTo = '/ops/biblioteca'): Promise<Session> {
+  const session = await currentSession();
+  if (!session) redirect(`/entrar?next=${encodeURIComponent(returnTo)}`);
+  if (!hasRole(session, 'content_editor', 'operator', 'admin')) redirect('/entrar?error=forbidden');
+  return session;
+}
+
 /**
  * Commercial records: operators, admins, and the finance role that exists
  * precisely so billing work does not require full operator rights.
