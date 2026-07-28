@@ -42,10 +42,13 @@ export async function GET() {
   // never advertise a route this tenant does not serve. Anchors are dropped:
   // "/#ciencia" is a section of the home page, not a separate URL, and listing
   // it asks a crawler to index the same page twice.
+  // `/cotizar` is deliberately absent. It is the commercial endpoint, but it
+  // sets `noindex` — it is a funnel step, not a landing page — and a sitemap
+  // that submits a noindex URL earns a "Submitted URL marked 'noindex'" error
+  // in Search Console. Crawlers reach it by following the CTA, which is what
+  // `follow` is for.
   const paths = [
     '/',
-    // The questionnaire is the site's commercial endpoint and is not in nav.
-    '/cotizar',
     ...config.nav.map((link) => link.href).filter((href) => href.startsWith('/') && !href.includes('#')),
   ];
   if (config.features.blog && !paths.includes('/blog')) paths.push('/blog');
