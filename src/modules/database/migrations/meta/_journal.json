@@ -22,6 +22,13 @@
       "when": 1785261474906,
       "tag": "0002_perpetual_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785269822400,
+      "tag": "0003_milky_hammerhead",
+      "breakpoints": true
     }
   ]
 }

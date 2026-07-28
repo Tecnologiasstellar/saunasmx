@@ -1,6 +1,7 @@
 import { listRecentPosts } from '@/db/queries';
 import { getDb } from '@/modules/database/client';
 import { listPublicPaths } from '@/modules/directory/queries';
+import { listLibraryPublicPaths } from '@/modules/library/queries';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { canonicalOrigin, isProduction, resolveRequestHost } from '@/modules/site/context';
 
@@ -58,6 +59,9 @@ export async function GET() {
   // `verify` record can never be advertised to a crawler from here.
   const db = await getDb();
   paths.push(...(await listPublicPaths(db, await getMarketplaceId(db, config.slug))));
+  if (config.features.library) {
+    paths.push(...(await listLibraryPublicPaths(db, await getMarketplaceId(db, config.slug))));
+  }
 
   const entries = [...new Set(paths)].map((path) => urlEntry(`${origin}${path === '/' ? '' : path}`));
 

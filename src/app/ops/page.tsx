@@ -38,6 +38,11 @@ export default async function OpsInbox({ searchParams }: { searchParams: Promise
       <Link className="mt-2 inline-block underline" data-testid="open-plans" href="/ops/planes">
         Planes y acuerdos
       </Link>
+      {resolution.config.features.library ? (
+        <Link className="ml-5 mt-2 inline-block underline" href="/ops/biblioteca">
+          Biblioteca editorial
+        </Link>
+      ) : null}
 
       {deadLetters.length > 0 ? (
         <p className="mt-4 rounded-[var(--radius)] bg-red-50 p-3 text-sm text-red-800">

@@ -1,0 +1,87 @@
+{
+  "marketplace": "suanas-mx",
+  "topics": [
+    {
+      "slug": "fundamentos-del-sauna",
+      "name": "Fundamentos del sauna",
+      "description": "Cómo funciona el sauna, cómo empezar y qué distingue una experiencia auténtica.",
+      "sortOrder": 10
+    },
+    {
+      "slug": "ciencia-del-calor",
+      "name": "Ciencia del calor",
+      "description": "Investigación, mecanismos, límites de la evidencia y preguntas aún abiertas.",
+      "sortOrder": 20
+    },
+    {
+      "slug": "contraste-y-frio",
+      "name": "Contraste y frío",
+      "description": "Enfriamiento, inmersión en agua fría y prácticas de contraste sin confundir intervenciones.",
+      "sortOrder": 30
+    },
+    {
+      "slug": "seguridad",
+      "name": "Seguridad",
+      "description": "Hidratación, exposición responsable, riesgos y poblaciones que necesitan orientación profesional.",
+      "sortOrder": 40
+    },
+    {
+      "slug": "sueno-y-recuperacion",
+      "name": "Sueño y recuperación",
+      "description": "Rituales, descanso, entrenamiento y recuperación con lenguaje proporcional a la evidencia.",
+      "sortOrder": 50
+    },
+    {
+      "slug": "tipos-de-sauna",
+      "name": "Tipos de sauna",
+      "description": "Sauna finlandés, infrarrojo, vapor y tecnologías relacionadas.",
+      "sortOrder": 60
+    },
+    {
+      "slug": "diseno-y-construccion",
+      "name": "Diseño y construcción",
+      "description": "Ventilación, calefactores, materiales, instalación y mantenimiento.",
+      "sortOrder": 70
+    },
+    {
+      "slug": "cultura-y-ritual",
+      "name": "Cultura y ritual",
+      "description": "Historia, etiqueta y prácticas culturales, respetando sus nombres y contextos.",
+      "sortOrder": 80
+    },
+    {
+      "slug": "sauna-comunitario",
+      "name": "Sauna comunitario",
+      "description": "Espacios sociales, operadores, asociaciones y nuevas comunidades de baño.",
+      "sortOrder": 90
+    },
+    {
+      "slug": "viajes-termales",
+      "name": "Viajes termales",
+      "description": "Destinos, tradiciones locales y experiencias de sauna alrededor del mundo.",
+      "sortOrder": 100
+    }
+  ],
+  "creators": [
+    {
+      "slug": "saunatimes",
+      "name": "SaunaTimes",
+      "summary": "Publicación y podcast independiente sobre cultura, construcción y experiencia de sauna.",
+      "countryCode": "US",
+      "languages": ["en"],
+      "officialWebsiteUrl": "https://www.saunatimes.com/",
+      "channels": [
+        {
+          "platform": "rss",
+          "externalId": "sauna-talk-rss",
+          "canonicalUrl": "https://www.saunatimes.com/sauna-talk-podcast/",
+          "feedUrl": "https://rss.libsyn.com/shows/80989/destinations/374776.xml",
+          "verificationUrl": "https://www.saunatimes.com/sauna-talk-podcast/",
+          "officialAccount": true,
+          "active": true
+        }
+      ]
+    }
+  ]
+}
+
