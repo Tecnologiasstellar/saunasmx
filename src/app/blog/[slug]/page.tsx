@@ -3,14 +3,14 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublishedPost } from '@/db/queries';
 import { getDb } from '@/modules/database/client';
-import { serviceLabels } from '@/modules/marketplace-config/labels';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
-import { listPublicProviders } from '@/modules/provider/public-queries';
+import { listPublicProfiles } from '@/modules/directory/queries';
+import { toProfileViews } from '@/modules/directory/view-model';
 import { canonicalOrigin, isProduction, resolveRequestHost } from '@/modules/site/context';
 import { articlePhoto } from '@/modules/ui/photos';
 import { Container, Eyebrow, PhotoFigure, buttonClass } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
-import { SupplierCard } from '@/modules/ui/supplier-card';
+import { DirectoryCard } from '@/modules/ui/directory-card';
 
 /**
  * Public article page. Markdown lives in Neon and is rendered server-side.
@@ -70,10 +70,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const html = await marked.parse(post.contentMarkdown, { async: true, gfm: true });
 
   const db = await getDb();
-  const related = await listPublicProviders(db, await getMarketplaceId(db, config.slug), {
-    limit: RELATED_SUPPLIERS,
-  });
-  const labels = serviceLabels(config);
+  const related = toProfileViews(
+    await listPublicProfiles(db, await getMarketplaceId(db, config.slug), 'provider', { limit: RELATED_SUPPLIERS }),
+  );
 
   const published = post.publishedAt;
 
@@ -175,11 +174,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {related.length > 0 ? (
           <section className="border-t border-[var(--border)] py-14 lg:py-16">
             <Container>
-              <Eyebrow className="mb-6">Proveedores aprobados en {config.name}</Eyebrow>
+              <Eyebrow className="mb-6">Proveedores de saunas en {config.name}</Eyebrow>
               <ul className="grid max-w-[1200px] list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((provider) => (
-                  <li key={provider.id} className="flex">
-                    <SupplierCard provider={provider} serviceLabels={labels} compact />
+                  <li key={provider.slug} className="flex">
+                    <DirectoryCard profile={provider} />
                   </li>
                 ))}
               </ul>

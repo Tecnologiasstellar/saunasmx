@@ -59,43 +59,52 @@ test('every photo on the public pages actually decodes', async ({ page }) => {
 });
 
 test('no public link points at a placeholder href', async ({ page }) => {
-  for (const path of ['/', '/directorio', '/cotizar', '/gracias']) {
+  for (const path of ['/', '/lugares', '/proveedores', '/cotizar', '/gracias']) {
     await page.goto(path);
     const dead = await page.locator('a[href="#"], a[href=""]').count();
     expect(dead, `${path} has a placeholder link`).toBe(0);
   }
 });
 
-test('the directory shows only providers approved on this marketplace', async ({ page }) => {
-  await page.goto('/directorio');
+test('/directorio permanently redirects to the provider directory', async ({ page }) => {
+  const response = await page.goto('/directorio');
+  await expect(page).toHaveURL(/\/proveedores$/);
+  expect(response?.status()).toBe(200);
+});
 
-  // Four approved sauna providers are seeded; Baja Spa Works is pending and
-  // must never appear, and the pergola-only companies belong to another host.
-  await expect(page.getByTestId('result-count')).toContainText('4 proveedores aprobados');
+test('the provider directory is scoped to this marketplace', async ({ page }) => {
+  await page.goto('/proveedores');
+
+  // Seeded companies approved on this marketplace, plus the researched
+  // suppliers. Baja Spa Works is pending, so it has no directory profile, and
+  // the pergola-only companies belong to another host.
   await expect(page.getByText('Nordic Sauna CDMX')).toBeVisible();
+  await expect(page.getByText('Sauna & Steam')).toBeVisible();
   await expect(page.getByText('Baja Spa Works')).toHaveCount(0);
   await expect(page.getByText('Pérgolas del Valle')).toHaveCount(0);
 });
 
-test('directory filters are real: they change the result set and the count', async ({ page }) => {
-  await page.goto('/directorio');
+test('the state filter changes the result set and stays a crawlable URL', async ({ page }) => {
+  await page.goto('/proveedores');
+  const all = await page.getByTestId('result-count').innerText();
 
-  await page.getByRole('radio', { name: 'JAL' }).check();
-  await page.getByTestId('apply-filters').click();
+  await page.getByRole('link', { name: 'Jalisco', exact: true }).click();
 
-  await expect(page).toHaveURL(/region=JAL/);
-  await expect(page.getByTestId('result-count')).toContainText('1 proveedor aprobado');
-  await expect(page.getByText('Infrarrojo Wellness GDL')).toBeVisible();
-  await expect(page.getByText('Nordic Sauna CDMX')).toHaveCount(0);
-
-  await page.getByRole('link', { name: 'Limpiar' }).click();
-  await expect(page.getByTestId('result-count')).toContainText('4 proveedores aprobados');
+  await expect(page).toHaveURL(/estado=Jalisco/);
+  const filtered = await page.getByTestId('result-count').innerText();
+  expect(filtered).toContain('en Jalisco');
+  expect(filtered).not.toEqual(all);
+  await expect(page.getByText('Sauna & Steam')).toHaveCount(0);
 });
 
-test('a supplier card CTA goes to the questionnaire, not to a private contact path', async ({ page }) => {
-  await page.goto('/directorio');
-  await page.getByRole('link', { name: /Solicitar cotización/ }).first().click();
-  await expect(page).toHaveURL(/\/cotizar/);
+test('a card leads to the profile, and the profile CTA reaches the questionnaire', async ({ page }) => {
+  await page.goto('/proveedores');
+  await page.getByRole('link', { name: /Ver perfil/ }).first().click();
+  await expect(page).toHaveURL(/\/proveedores\/[a-z0-9-]+$/);
+
+  await page.getByRole('link', { name: 'Solicitar cotización' }).first().click();
+  await expect(page).toHaveURL(/\/cotizar\?proveedor=/);
+  await expect(page.getByTestId('selected-provider')).toBeVisible();
   await expect(page.getByTestId('step-label')).toBeVisible();
 });
 
@@ -116,7 +125,7 @@ test('a postal code carried in from an article prefills the form and is still va
 test('the public pages fit a narrow phone with no horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
 
-  for (const path of ['/', '/directorio', '/cotizar', '/gracias', '/blog']) {
+  for (const path of ['/', '/lugares', '/proveedores', '/lugares/koti-wellness', '/proveedores/sauna-steam', '/cotizar', '/gracias', '/blog']) {
     await page.goto(path);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -126,7 +135,7 @@ test('the public pages fit a narrow phone with no horizontal overflow', async ({
 });
 
 test('the directory is not indexable outside production', async ({ page }) => {
-  await page.goto('/directorio');
+  await page.goto('/proveedores');
   const robots = await page.locator('meta[name="robots"]').getAttribute('content');
   expect(robots ?? '').toContain('noindex');
 });

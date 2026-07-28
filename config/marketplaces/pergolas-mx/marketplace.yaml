@@ -14,8 +14,8 @@ matching: ./matching.yaml
 # No blog entry: the editorial corpus is sauna-specific, so this marketplace
 # neither links to it nor serves it (features.blog below).
 nav:
-  - label: Directorio
-    href: /directorio
+  - label: Proveedores
+    href: /proveedores
   - label: Guía
     href: /#guia
 features:

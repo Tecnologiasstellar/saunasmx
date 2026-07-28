@@ -10,6 +10,7 @@ import { getDb } from '../src/modules/database/client';
 import {
   appUser,
   commercialPlan,
+  directoryProfile,
   providerCompany,
   providerMarketplace,
   providerProfile,
@@ -18,6 +19,7 @@ import {
   providerTerritory,
   userRole,
 } from '../src/modules/database/schema';
+import { slugify } from '../src/modules/directory/csv';
 import { loadMarketplaceConfigs } from '../src/modules/marketplace-config/loader';
 import { publishMarketplaceConfigs } from '../src/modules/marketplace-config/publish';
 
@@ -336,6 +338,39 @@ for (const fixture of PROVIDERS) {
         verificationStatus: entry.status === 'approved' ? 'verified' : 'unverified',
       })
       .onConflictDoNothing();
+
+    // A public directory listing for the provider, linked back to the company.
+    //
+    // This is the bridge in `directory_profile.provider_company_id`: research
+    // rows arrive unclaimed, and a company that has actually signed up and been
+    // approved is the only thing that earns the verified badge. Seeding it here
+    // means `/proveedores` is populated on every marketplace, including one with
+    // no research import of its own.
+    if (entry.status === 'approved') {
+      await db
+        .insert(directoryProfile)
+        .values({
+          marketplaceId,
+          kind: 'provider',
+          slug: slugify(fixture.displayName),
+          name: fixture.displayName,
+          sourceDataset: 'seed',
+          externalId: slugify(fixture.legalName),
+          blurb: entry.description,
+          about: entry.description,
+          accessNote: `Cobertura declarada: ${entry.regionCode}.`,
+          detailsJson: {
+            supplierType: 'manufacturer_installer',
+            supplierTypeLabel: 'Fabricante e instalador',
+            customBuild: true,
+          },
+          factsJson: [{ label: 'Tipo', value: 'Fabricante e instalador' }],
+          publicationStatus: 'published',
+          evidenceStatus: 'core',
+          providerCompanyId: companyId,
+        })
+        .onConflictDoNothing();
+    }
   }
 
   console.log(`Provider: ${fixture.displayName} (${fixture.marketplaces.map((m) => `${m.slug}:${m.status}`).join(', ')})`);

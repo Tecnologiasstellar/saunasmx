@@ -1,0 +1,268 @@
+{
+  "_comment": "Spanish vocabulary for the sauna directory import. Read only by scripts/directory-import.ts — the database stores display-ready Spanish, so the running app never loads this file. A second category ships its own copy of this file; nothing here belongs in code. An import that meets a token missing from this file reports it and refuses to publish that record's fact rather than showing English.",
+  "venueType": {
+    "contrast_therapy_studio": "Estudio de terapia de contraste",
+    "contrast_therapy_club": "Club de terapia de contraste",
+    "bathhouse_recovery_club": "Casa de baños y club de recuperación",
+    "bathhouse_spa": "Casa de baños y spa",
+    "private_bathhouse": "Casa de baños privada",
+    "mobile_sauna": "Sauna móvil",
+    "fitness_recovery_club": "Club de acondicionamiento y recuperación",
+    "fitness_club": "Club deportivo",
+    "wellness_club": "Club de bienestar",
+    "wellness_spa": "Spa de bienestar",
+    "day_spa": "Spa de día",
+    "destination_spa": "Spa de destino",
+    "destination_hotel_spa": "Spa de hotel de destino",
+    "hotel_day_spa": "Spa de hotel con acceso por día",
+    "hotel_spa": "Spa de hotel",
+    "hotel_villa_spa": "Spa de villas de hotel",
+    "hotel_wellness": "Área de bienestar de hotel",
+    "hotel_wellness_sanctuary": "Santuario de bienestar de hotel",
+    "resort_spa": "Spa de resort"
+  },
+  "accessModel": {
+    "bookable_public": {
+      "label": "Reserva pública",
+      "note": "Puedes reservar una sesión directamente, sin membresía.",
+      "bookable": true
+    },
+    "bookable_private_and_social": {
+      "label": "Sesión social o privada",
+      "note": "Acepta reservas públicas en formato social o privado.",
+      "bookable": true
+    },
+    "bookable_public_and_membership": {
+      "label": "Pase o membresía",
+      "note": "Puedes entrar con pase suelto o con membresía.",
+      "bookable": true
+    },
+    "public_day_pass_and_membership": {
+      "label": "Pase de día",
+      "note": "Hay pase de día; no necesitas membresía.",
+      "bookable": true
+    },
+    "external_day_pass": {
+      "label": "Pase de día para externos",
+      "note": "El hotel vende pase de día a visitantes que no se hospedan.",
+      "bookable": true
+    },
+    "day_pass_hydrotherapy": {
+      "label": "Pase de hidroterapia",
+      "note": "Ofrece pase de día al circuito de hidroterapia, con cargo adicional.",
+      "bookable": true
+    },
+    "external_spa_booking": {
+      "label": "Reserva de spa para externos",
+      "note": "El spa acepta reservas de visitantes que no se hospedan.",
+      "bookable": true
+    },
+    "external_spa_appointment": {
+      "label": "Cita para externos",
+      "note": "El spa permite agendar cita a personas que no se hospedan.",
+      "bookable": true
+    },
+    "adult_men_only": {
+      "label": "Solo hombres adultos",
+      "note": "El establecimiento declara servicio exclusivo para hombres adultos.",
+      "bookable": false
+    },
+    "private_group_buyout": {
+      "label": "Solo grupo privado",
+      "note": "Se renta el lugar completo para un grupo privado; no hay entrada individual.",
+      "bookable": true
+    },
+    "membership_and_single_recovery_session": {
+      "label": "Sesión suelta o membresía",
+      "note": "Puedes comprar una sesión de recuperación suelta o una membresía.",
+      "bookable": true
+    },
+    "membership_and_event_booking": {
+      "label": "Membresía o evento",
+      "note": "El acceso es por membresía o por evento con reserva.",
+      "bookable": true
+    },
+    "membership_or_gym_visit": {
+      "label": "Membresía de gimnasio",
+      "note": "El acceso es por membresía o visita al gimnasio; confirma las condiciones para visitantes.",
+      "bookable": false
+    },
+    "membership_preopening": {
+      "label": "En preapertura",
+      "note": "El club anuncia apertura próxima; confirma que ya esté operando antes de ir.",
+      "bookable": false
+    },
+    "reservation_required": {
+      "label": "Solo con reserva",
+      "note": "El acceso es únicamente con reserva previa.",
+      "bookable": true
+    },
+    "treatment_required_or_hotel_guest": {
+      "label": "Con tratamiento o huésped",
+      "note": "El acceso viene incluido al reservar un tratamiento, o es para huéspedes del hotel.",
+      "bookable": false
+    },
+    "treatment_required_or_spa_booking": {
+      "label": "Con tratamiento",
+      "note": "El acceso normalmente requiere reservar un tratamiento del spa.",
+      "bookable": false
+    },
+    "hotel_or_spa_booking": {
+      "label": "Hotel o spa",
+      "note": "El acceso es por reserva del hotel o del spa; confirma si admiten visitantes externos.",
+      "bookable": false
+    },
+    "hotel_or_wellness_booking": {
+      "label": "Hotel o bienestar",
+      "note": "El acceso es por reserva del hotel o de su programa de bienestar; confirma acceso para externos.",
+      "bookable": false
+    },
+    "hotel_or_day_resort_booking": {
+      "label": "Hotel o resort de día",
+      "note": "El acceso es por reserva de hotel o de resort de día; confirma si admiten visitantes externos.",
+      "bookable": false
+    },
+    "hotel_or_guest_services_booking": {
+      "label": "Por concierge del hotel",
+      "note": "La reserva se hace a través de Guest Services del hotel; confirma acceso para externos.",
+      "bookable": false
+    },
+    "hotel_guest_or_spa_booking": {
+      "label": "Huésped o reserva de spa",
+      "note": "El acceso es para huéspedes o por reserva del spa; confirma acceso para externos.",
+      "bookable": false
+    }
+  },
+  "supplierType": {
+    "manufacturer_installer": "Fabricante e instalador",
+    "manufacturer": "Fabricante",
+    "distributor_installer": "Distribuidor e instalador",
+    "installer_distributor": "Instalador y distribuidor",
+    "installer_carpentry": "Carpintería e instalación"
+  },
+  "saunaType": {
+    "sauna": "Sauna",
+    "traditional sauna": "Sauna tradicional",
+    "traditional dry": "Seca tradicional",
+    "dry sauna": "Sauna seca",
+    "wood sauna": "Sauna de madera",
+    "large wood-fired sauna": "Sauna grande a leña",
+    "mobile sauna": "Sauna móvil",
+    "infrared": "Infrarrojo",
+    "infrared sauna": "Sauna infrarrojo",
+    "steam": "Vapor",
+    "steam bath": "Baño de vapor",
+    "steam cabin": "Cabina de vapor",
+    "aromatic steam": "Vapor aromático",
+    "eucalyptus steam": "Vapor de eucalipto",
+    "Turkish bath": "Baño turco",
+    "hot room": "Sala caliente",
+    "temazcal": "Temazcal",
+    "Aufguss": "Aufguss"
+  },
+  "amenity": {
+    "cold plunge": "Tina fría",
+    "cold plunges": "Tinas frías",
+    "hot and cold plunge pools": "Albercas de inmersión fría y caliente",
+    "two individual cold plunges": "Dos tinas frías individuales",
+    "warm/cold plunge lagoons": "Lagunas templada y fría",
+    "contrast pools": "Albercas de contraste",
+    "cold immersion": "Inmersión fría",
+    "ice bath": "Baño de hielo",
+    "ice room": "Sala de hielo",
+    "ice fountain": "Fuente de hielo",
+    "ice/herbal bath on Sundays": "Baño de hielo o herbal los domingos",
+    "mineral hot soak": "Tina caliente mineral",
+    "hot tub": "Tina caliente",
+    "hot tubs": "Tinas calientes",
+    "hot/cold jacuzzis": "Jacuzzis frío y caliente",
+    "jacuzzi": "Jacuzzi",
+    "whirlpool": "Hidromasaje",
+    "two hydrotherapy whirlpools": "Dos hidromasajes de hidroterapia",
+    "hydromassage pool": "Alberca de hidromasaje",
+    "hydromassage tub": "Tina de hidromasaje",
+    "hydromassage waterfalls": "Cascadas de hidromasaje",
+    "hydrotherapy": "Hidroterapia",
+    "hydrotherapy circuit": "Circuito de hidroterapia",
+    "hydro-reflexology": "Hidro-reflexología",
+    "contrast circuit": "Circuito de contraste",
+    "contrast therapy": "Terapia de contraste",
+    "vitality pool": "Alberca de vitalidad",
+    "warm pool": "Alberca templada",
+    "pool": "Alberca",
+    "pools": "Albercas",
+    "indoor pool": "Alberca techada",
+    "flotarium": "Flotarium",
+    "float tank": "Tanque de flotación",
+    "tubs": "Tinas",
+    "copper tubs": "Tinas de cobre",
+    "rain shower": "Regadera de lluvia",
+    "rain showers": "Regaderas de lluvia",
+    "showers": "Regaderas",
+    "outdoor showers": "Regaderas al aire libre",
+    "in-cabin shower": "Regadera en cabina",
+    "Swiss shower": "Regadera suiza",
+    "sensation shower": "Regadera de sensaciones",
+    "sensory showers": "Regaderas sensoriales",
+    "pressure showers": "Regaderas a presión",
+    "detox shower": "Regadera detox",
+    "cascades": "Cascadas",
+    "steam": "Vapor",
+    "steam room": "Sala de vapor",
+    "chromotherapy steam": "Vapor con cromoterapia",
+    "Egyptian bath": "Baño egipcio",
+    "temazcal": "Temazcal",
+    "ceremonial temazcal": "Temazcal ceremonial",
+    "ancestral rituals": "Rituales ancestrales",
+    "breathwork": "Respiración guiada",
+    "optional breathwork and massage": "Respiración y masaje opcionales",
+    "sound": "Sonoterapia",
+    "sound-healing events": "Eventos de sonoterapia",
+    "movement": "Movimiento",
+    "mindful movement": "Movimiento consciente",
+    "yoga": "Yoga",
+    "massage": "Masaje",
+    "massages": "Masajes",
+    "facials": "Faciales",
+    "body treatments": "Tratamientos corporales",
+    "body wraps": "Envolturas corporales",
+    "holistic treatments": "Tratamientos holísticos",
+    "aromatherapy": "Aromaterapia",
+    "private treatment rooms": "Cabinas privadas de tratamiento",
+    "10 treatment cabins": "10 cabinas de tratamiento",
+    "couples room": "Cabina para pareja",
+    "salon": "Salón de belleza",
+    "beauty salon": "Salón de belleza",
+    "relaxation room": "Sala de relajación",
+    "relaxation area": "Área de relajación",
+    "relaxation pod": "Cápsula de relajación",
+    "heated lounge bed": "Camastro térmico",
+    "zero-gravity chair": "Silla de gravedad cero",
+    "lounge": "Lounge",
+    "garden rest": "Descanso en jardín",
+    "fire pit": "Fogata",
+    "villas": "Villas",
+    "cenote setting": "Entorno de cenote",
+    "wine-country retreat": "Retiro en zona vinícola",
+    "beach resort amenities": "Amenidades de resort de playa",
+    "gym": "Gimnasio",
+    "fitness": "Gimnasio",
+    "fitness center": "Gimnasio",
+    "spa area": "Área de spa",
+    "fitness recovery": "Recuperación deportiva",
+    "recovery": "Recuperación",
+    "compression boots": "Botas de compresión",
+    "pressotherapy": "Presoterapia",
+    "strength and HYROX training": "Entrenamiento de fuerza y HYROX",
+    "Mayweather Boxing": "Mayweather Boxing",
+    "padel": "Pádel",
+    "coworking": "Coworking",
+    "events": "Eventos",
+    "lockers": "Lockers",
+    "drinks": "Bebidas",
+    "non-alcoholic drink": "Bebida sin alcohol",
+    "romantic dinner packages": "Paquetes de cena romántica",
+    "video bar": "Video bar",
+    "waiver": "Carta responsiva"
+  }
+}

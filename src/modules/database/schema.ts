@@ -1,6 +1,7 @@
 import {
   boolean,
   char,
+  date,
   index,
   integer,
   jsonb,
@@ -58,6 +59,21 @@ export const providerMarketplaceStatus = pgEnum('provider_marketplace_status', [
   'suspended',
 ]);
 export const verificationStatus = pgEnum('verification_status', ['unverified', 'documents_submitted', 'verified']);
+
+/**
+ * What kind of thing a directory profile describes. A place is somewhere a
+ * consumer goes; a provider is someone who builds for them. The two render
+ * through one component set and differ only in data and call to action.
+ */
+export const directoryKind = pgEnum('directory_kind', ['place', 'provider']);
+
+/**
+ * How well public evidence supports a directory record, from the research
+ * package that seeds it. Distinct from publication: `core` is high-confidence
+ * research, but nothing is public until an operator publishes it, and `verify`
+ * is never public at all.
+ */
+export const evidenceStatus = pgEnum('evidence_status', ['core', 'secondary', 'verify', 'inactive']);
 
 /** docs/05-api-contracts.md → State transitions → Project */
 export const projectStatus = pgEnum('project_status', [
@@ -347,6 +363,104 @@ export const providerPortfolioItem = pgTable('provider_portfolio_item', {
   published: boolean('published').notNull().default(false),
   createdAt: createdAt(),
 });
+
+/* -------------------------------------------------------------------------- */
+/* Public directory                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * An editorial directory listing: a place a consumer can book, or a provider a
+ * consumer can request a quote from.
+ *
+ * Deliberately not `provider_company`. That table is a transactional
+ * counterparty — it has logins, marketplace approval, territories, capacity,
+ * assignments and commission events. A researched business has agreed to none
+ * of that, and putting one here would make it a candidate for lead
+ * distribution. A place is not a provider at all: it never receives a lead, it
+ * receives a booking on its own site.
+ *
+ * `provider_company_id` is the bridge. When a researched supplier onboards for
+ * real, its profile points at the live company and can show a verified badge —
+ * without the directory ever having faked one.
+ *
+ * One table with a `kind` discriminator rather than two, because the public
+ * page and card are the same component for both. `marketplace_id` is what lets
+ * the next category reuse all of it: different rows, identical code.
+ */
+export const directoryProfile = pgTable(
+  'directory_profile',
+  {
+    id: id(),
+    marketplaceId: uuid('marketplace_id').notNull().references(() => marketplace.id),
+    kind: directoryKind('kind').notNull(),
+    /** Unique per kind: /lugares/[slug] and /proveedores/[slug] are separate namespaces. */
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    aliases: text('aliases'),
+
+    /** Which research file this came from, and its id there. Together they make re-import idempotent. */
+    sourceDataset: text('source_dataset').notNull(),
+    externalId: text('external_id').notNull(),
+
+    /** Spanish display copy. Written at import from source-backed fields only. */
+    blurb: text('blurb'),
+    about: text('about'),
+    /**
+     * The access restriction in plain Spanish — hotel guests only, adult men
+     * only, private buyout, membership. It sits next to the call to action
+     * rather than inside a tooltip, because it is the thing most likely to
+     * waste a visitor's trip.
+     */
+    accessNote: text('access_note'),
+
+    websiteUrl: text('website_url'),
+    /** External booking destination. Places only; a provider quote is an internal route. */
+    bookingUrl: text('booking_url'),
+
+    city: text('city'),
+    state: text('state'),
+    address: text('address'),
+    /** Free text for the rare multi-site operator, e.g. Koti's three CDMX studios. */
+    additionalLocations: text('additional_locations'),
+
+    /** Kind-specific source values, validated by a Zod schema at the import boundary. */
+    detailsJson: jsonb('details_json').notNull().default({}),
+    /** Ordered display facts, `[{label, value}]`. Rendered verbatim, so an operator controls them. */
+    factsJson: jsonb('facts_json').notNull().default([]),
+
+    publicationStatus: contentStatus('publication_status').notNull().default('draft'),
+    evidenceStatus: evidenceStatus('evidence_status').notNull().default('verify'),
+    sourceQuality: char('source_quality', { length: 1 }),
+    /** Public source URLs. The audit trail behind every published claim. */
+    sourceUrlsJson: jsonb('source_urls_json').notNull().default([]),
+    /** Internal researcher note. Never rendered publicly. */
+    evidenceNote: text('evidence_note'),
+    lastVerifiedAt: date('last_verified_at'),
+
+    providerCompanyId: uuid('provider_company_id').references(() => providerCompany.id),
+
+    /**
+     * What the last import wrote, field by field. A re-import compares against
+     * this: a field still matching is refreshed, a field an operator has since
+     * edited is reported as a conflict and left alone.
+     */
+    importedJson: jsonb('imported_json'),
+
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('directory_profile_slug_key').on(table.marketplaceId, table.kind, table.slug),
+    uniqueIndex('directory_profile_source_key').on(table.marketplaceId, table.sourceDataset, table.externalId),
+    index('directory_profile_public_idx').on(
+      table.marketplaceId,
+      table.kind,
+      table.publicationStatus,
+      table.evidenceStatus,
+    ),
+    index('directory_profile_state_idx').on(table.marketplaceId, table.kind, table.state),
+  ],
+);
 
 /* -------------------------------------------------------------------------- */
 /* Consumer, project, lead                                                    */

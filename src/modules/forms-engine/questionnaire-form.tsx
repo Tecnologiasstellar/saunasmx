@@ -26,6 +26,7 @@ export function QuestionnaireForm({
   marketplaceSlug,
   consentLabel,
   initialPostalCode = '',
+  preferredProviderSlug,
 }: {
   questionnaire: Questionnaire;
   marketplaceSlug: string;
@@ -37,6 +38,12 @@ export function QuestionnaireForm({
    * the questionnaire accepts, and it skips no step.
    */
   initialPostalCode?: string;
+  /**
+   * Set when the visitor started on a provider's directory page. The route
+   * resolves it against a published profile before passing it here, so an
+   * unknown slug never reaches the payload.
+   */
+  preferredProviderSlug?: string;
 }) {
   const router = useRouter();
   const steps = questionnaire.steps;
@@ -116,6 +123,7 @@ export function QuestionnaireForm({
       answers,
       consent: { leadContact: consent, providerSharing: consent, policyVersion: PRIVACY_POLICY_VERSION },
       attribution,
+      ...(preferredProviderSlug ? { preferredProviderSlug } : {}),
       idempotencyKey,
     };
 
