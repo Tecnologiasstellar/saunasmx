@@ -75,29 +75,9 @@ h3 {
   transform: translateY(-2px);
 }
 
-/* Striped stand-in for photography that has not been shot yet. Deliberately
-   abstract: it must never read as a real photograph. */
-.placeholder-media {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--border),
-    var(--border) 12px,
-    var(--brand-soft) 12px,
-    var(--brand-soft) 24px
-  );
-}
-/* Hero backdrop stand-in. Mixed from the theme's own dark surface and glow so
-   it reads as warm wood on saunas and as the pergola palette on pergolas —
-   one rule, no per-marketplace texture. */
-.placeholder-wood {
-  background: repeating-linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--surface-dark) 85%, var(--glow)) 0px,
-    color-mix(in srgb, var(--surface-dark) 85%, var(--glow)) 4px,
-    color-mix(in srgb, var(--surface-dark) 70%, var(--glow)) 4px,
-    color-mix(in srgb, var(--surface-dark) 70%, var(--glow)) 34px
-  );
-}
+/* Supplier logos are still stand-ins: providers upload their own, and until one
+   does there is no image to show. Photography placeholders are gone — see
+   src/modules/ui/photos.ts. */
 .placeholder-logo {
   background: repeating-linear-gradient(
     45deg,

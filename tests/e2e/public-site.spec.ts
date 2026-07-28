@@ -30,6 +30,34 @@ test('the hero preview reports the questionnaire real length, not the mockup fou
   await expect(page.getByText('Paso 1 de 9')).toBeVisible();
 });
 
+test('every photo on the public pages actually decodes', async ({ page }) => {
+  // Every other test on this page passes with all photography broken: text,
+  // links and headings do not care whether an <img> resolved. During this
+  // build the image optimizer returned 400 for every photo and nothing failed.
+  // naturalWidth is the only assertion that proves a decode actually happened.
+  for (const path of ['/', '/blog']) {
+    await page.goto(path);
+    const images = page.locator('img');
+    expect(await images.count(), `${path} renders no photography at all`).toBeGreaterThan(0);
+
+    // Polled, because a decode that is merely slow is not a failure.
+    await expect
+      .poll(
+        async () =>
+          await images.evaluateAll((nodes) =>
+            nodes
+              .filter((node) => {
+                const image = node as HTMLImageElement;
+                return image.complete && image.naturalWidth === 0;
+              })
+              .map((node) => (node as HTMLImageElement).currentSrc),
+          ),
+        { message: `${path} has photos that failed to load` },
+      )
+      .toEqual([]);
+  }
+});
+
 test('no public link points at a placeholder href', async ({ page }) => {
   for (const path of ['/', '/directorio', '/cotizar', '/gracias']) {
     await page.goto(path);

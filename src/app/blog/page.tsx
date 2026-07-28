@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { listRecentPosts } from '@/db/queries';
 import { isProduction, resolveRequestHost } from '@/modules/site/context';
-import { Card, Container, MediaPlaceholder, SectionHeading } from '@/modules/ui/primitives';
+import { articlePhotos } from '@/modules/ui/photos';
+import { Card, Container, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 
 export const revalidate = 3600;
@@ -33,6 +34,8 @@ export default async function BlogIndexPage() {
   if (!config.features.blog) notFound();
 
   const recent = await listRecentPosts(50);
+  // Assigned as a set so no two cards in the grid repeat a photo.
+  const postImages = articlePhotos(recent.map((post) => post.slug));
 
   return (
     <>
@@ -59,10 +62,14 @@ export default async function BlogIndexPage() {
             </Card>
           ) : (
             <ul className="grid list-none gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
-              {recent.map((post) => (
+              {recent.map((post, index) => (
                 <li key={post.slug}>
                   <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-4 text-inherit">
-                    <MediaPlaceholder caption="pendiente: imagen del artículo" className="lift" />
+                    <PhotoFigure
+                      photo={postImages[index]!}
+                      sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+                      className="lift"
+                    />
                     <div>
                       <h2 className="text-xl font-semibold leading-snug group-hover:text-[var(--brand)]">
                         {post.title}

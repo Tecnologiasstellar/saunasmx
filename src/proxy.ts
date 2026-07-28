@@ -9,7 +9,11 @@ import { parseHostMap, resolveHost } from './modules/marketplace-config/resolve-
  * a configuration change, not a rebuild — this is the mechanism.
  */
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // `img/` is excluded for the same reason as `_next/static`: it is brand-neutral
+  // static media, and the image optimizer fetches those files back through this
+  // server without a marketplace Host — host resolution would 404 them and every
+  // photo on the site would fail to render.
+  matcher: ['/((?!_next/static|_next/image|img/|favicon.ico).*)'],
 };
 
 const UNKNOWN_HOST_BODY = `<!doctype html>

@@ -23,6 +23,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "config:validate": "tsx scripts/config-validate.ts",
     "marketplace:create": "tsx scripts/marketplace-create.ts",
+    "photos:fetch": "tsx scripts/fetch-photos.ts",
     "outbox:work": "tsx scripts/outbox-work.ts"
   },
   "license": "UNLICENSED",
