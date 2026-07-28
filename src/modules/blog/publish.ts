@@ -172,16 +172,26 @@ const SOURCES: { url: string; label: string }[] = [
  * is a gate: Mexican health advertising is regulated by COFEPRIS, and the site
  * is an educational publisher, not a clinic.
  *
- * A negation immediately before the phrase is allowed — "la sauna no quema
- * grasa" is exactly the myth-correction the strategy asks for. Anything else
- * fails the run. A missing day costs nothing; a published medical claim does.
+ * Narrowed 2026-07-28 (AV, explicit call) to the bright-line disease/medical-
+ * authority claims COFEPRIS actually names — cure/prevent/treat a named
+ * condition, or a false clinical/medical endorsement. Softer wellness-marketing
+ * phrases (quema grasa, elimina toxinas, and the like) were dropped from the
+ * gate: they were blocking routine cold-therapy/detox-adjacent topics whose
+ * whole point is debunking that exact myth, and they're puffery rather than
+ * the "therapeutic/preventive/rehabilitative" territory COFEPRIS warns about.
+ * If a run starts asserting those as fact rather than debunking them, that's
+ * still worth a manual read before it ships.
+ *
+ * A negation immediately before the phrase is allowed — "la sauna no cura el
+ * insomnio" is exactly the myth-correction the strategy asks for. Anything
+ * else fails the run. A missing day costs nothing; a published medical claim
+ * does.
  */
 const PROHIBITED_CLAIMS = [
   'cura el insomnio', 'cura la depresion', 'cura la ansiedad',
   'previene el cancer', 'previene la demencia', 'previene el alzheimer',
   'trata la disfuncion', 'aumenta la testosterona', 'sube la testosterona',
   'alarga la vida', 'extiende la vida', 'revierte el envejecimiento',
-  'elimina toxinas', 'desintoxica el cuerpo', 'quema grasa', 'quema calorias',
   'grado medico', 'clinicamente comprobado', 'cientificamente comprobado',
   'resultados garantizados',
 ];
