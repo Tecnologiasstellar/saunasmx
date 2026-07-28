@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireOperator } from '../auth/current-user';
 import { getDb } from '../database/client';
 import { DomainError } from '../errors';
-import { discardLead, qualifyLead } from '../leads/commands';
+import { confirmLeadContact, discardLead, markLeadUnreachable, qualifyLead } from '../leads/commands';
 import { getMarketplaceId } from '../marketplace-config/publish';
 import { assignProviders } from '../matching-engine/assign';
 import { newCorrelationId } from '../observability/logger';
@@ -59,6 +59,34 @@ export async function discardLeadAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/ops/leads/${leadId}`);
   revalidatePath('/ops');
+}
+
+export async function confirmLeadContactAction(formData: FormData): Promise<void> {
+  const leadId = String(formData.get('leadId') ?? '');
+  const { session, db, marketplaceId } = await operatorContext();
+
+  await confirmLeadContact(db, {
+    leadId,
+    marketplaceId,
+    actor: { type: 'operator', id: session.userId },
+    correlationId: newCorrelationId(),
+  });
+
+  revalidatePath(`/ops/leads/${leadId}`);
+}
+
+export async function markLeadUnreachableAction(formData: FormData): Promise<void> {
+  const leadId = String(formData.get('leadId') ?? '');
+  const { session, db, marketplaceId } = await operatorContext();
+
+  await markLeadUnreachable(db, {
+    leadId,
+    marketplaceId,
+    actor: { type: 'operator', id: session.userId },
+    correlationId: newCorrelationId(),
+  });
+
+  revalidatePath(`/ops/leads/${leadId}`);
 }
 
 export type AssignActionState = { error?: string; assigned?: number };

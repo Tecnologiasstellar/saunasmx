@@ -10,7 +10,7 @@ import {
 } from '../database/schema';
 import { DomainError, ERROR_CODES } from '../errors';
 import { isUnspecified } from '../matching-engine/evaluate';
-import type { MarketplaceConfig, QuestionnaireOption } from '../marketplace-config/types';
+import { findSelectOptions, type MarketplaceConfig, type QuestionnaireOption } from '../marketplace-config/types';
 import { recordAudit } from '../observability/audit';
 
 /**
@@ -51,9 +51,9 @@ export type CoverageInput = {
  * touching this module (ADR-006).
  */
 export function allowedServiceOptions(config: MarketplaceConfig): QuestionnaireOption[] {
-  const step = config.questionnaire.steps.find((candidate) => candidate.id === config.matching.answerMapping.service);
-  if (!step || !('options' in step)) return [];
-  return step.options.filter((option) => !isUnspecified(option.value));
+  const options = findSelectOptions(config.questionnaire, config.matching.answerMapping.service);
+  if (!options) return [];
+  return options.filter((option) => !isUnspecified(option.value));
 }
 
 export function allowedServiceKeys(config: MarketplaceConfig): string[] {

@@ -37,24 +37,33 @@ export default async function PrivacyNoticePage() {
 
           <h2 className="mt-8 text-xl font-semibold">Datos que recabamos</h2>
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
-            Cuando llenas el cuestionario recabamos: nombre, correo electrónico, teléfono, código postal, y las
-            respuestas sobre tu proyecto (tipo, capacidad, presupuesto estimado y fecha deseada). No recabamos datos
-            financieros, de salud ni ningún dato sensible en los términos de la ley.
+            Cuando llenas el cuestionario recabamos: nombre, correo electrónico, WhatsApp, estado, ciudad, código
+            postal y las respuestas sobre tu proyecto (tipo, capacidad, presupuesto estimado y fecha deseada). La
+            calle y número son opcionales: si los proporcionas, los usamos únicamente para entender el acceso y la
+            viabilidad del proyecto — nunca se publican ni se comparten antes de que autorices el contacto con un
+            proveedor. No recabamos datos financieros, de salud ni ningún dato sensible en los términos de la ley.
           </p>
 
           <h2 className="mt-8 text-xl font-semibold">Para qué usamos tus datos</h2>
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
-            Usamos tus datos únicamente para: (1) contactarte sobre tu proyecto, (2) compartir tu proyecto con hasta
-            dos proveedores relevantes que operen en tu zona, para que puedan enviarte una cotización, y (3) mejorar
-            el funcionamiento de este sitio. No vendemos tus datos ni los compartimos con nadie fuera de este
-            propósito.
+            Usamos tus datos únicamente para: (1) contactarte por WhatsApp sobre tu proyecto, (2) compartir tu
+            proyecto con hasta dos proveedores relevantes que operen en tu zona, para que puedan enviarte una
+            cotización, y (3) mejorar el funcionamiento de este sitio. No vendemos tus datos ni los compartimos con
+            nadie fuera de este propósito.
+          </p>
+
+          <h2 className="mt-8 text-xl font-semibold">Tu consentimiento</h2>
+          <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
+            El cuestionario te pide dos autorizaciones separadas: una para que te contactemos por WhatsApp a confirmar
+            tu proyecto, y otra, independiente, para compartir tu proyecto con hasta dos proveedores. Ambas son
+            necesarias para enviarte una cotización, pero son dos decisiones distintas — no una sola casilla.
           </p>
 
           <h2 className="mt-8 text-xl font-semibold">Transferencia a proveedores</h2>
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
-            Al aceptar el aviso de consentimiento en el cuestionario, autorizas que compartamos tu nombre, contacto y
-            los detalles de tu proyecto con los proveedores que asignemos a tu caso, únicamente para que puedan
-            responderte con una cotización.
+            Al otorgar el consentimiento de compartir tu proyecto en el cuestionario, autorizas que compartamos tu
+            nombre, contacto y los detalles de tu proyecto —incluida la calle y número, si los diste— con los
+            proveedores que asignemos a tu caso, únicamente para que puedan responderte con una cotización.
           </p>
 
           <h2 className="mt-8 text-xl font-semibold">Tus derechos (ARCO)</h2>

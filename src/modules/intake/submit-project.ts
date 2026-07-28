@@ -15,6 +15,7 @@ import {
   questionnaireResponse,
 } from '../database/schema';
 import type { MarketplaceConfig } from '../marketplace-config/types';
+import { computeLeadScore } from '../lead-scoring/score';
 import { parseBudgetBucket } from '../matching-engine/budget';
 import { recordAudit, track } from '../observability/audit';
 import { enqueueEvent } from '../observability/outbox';
@@ -186,6 +187,10 @@ export async function submitProject(db: Database, args: SubmitArgs): Promise<Int
       postalCode: input.location.postalCode,
       city: input.location.city ?? null,
       stateCode: input.location.state ?? null,
+      // Structured, optional, and confined to this table — never read by
+      // matching/eligibility and never forwarded to track()/enqueueEvent()/
+      // recordAudit() below.
+      streetAddress: input.location.streetAddress ?? null,
     });
 
     // 4. Requirements: the answers as given, plus the derived matching dimensions.
@@ -285,6 +290,12 @@ export async function submitProject(db: Database, args: SubmitArgs): Promise<Int
     const qualification = serviceable && !signals.duplicate ? 'qualified' : 'review_required';
     const lifecycle = config.matching.reviewPolicy === 'manual' ? 'review_required' : qualification === 'qualified' ? 'ready_for_matching' : 'review_required';
 
+    // Lead grading is opt-in per marketplace (config.leadScoring is undefined
+    // unless a marketplace's marketplace.yaml sets `lead_scoring`) — this is
+    // never a slug check, so a marketplace that never configures it (e.g.
+    // pergolas-mx) simply never grades leads.
+    const scored = config.leadScoring ? computeLeadScore(config.leadScoring, input.answers, { serviceable }) : null;
+
     const [leadRow] = await tx
       .insert(lead)
       .values({
@@ -292,6 +303,9 @@ export async function submitProject(db: Database, args: SubmitArgs): Promise<Int
         lifecycleStatus: lifecycle,
         qualificationStatus: qualification,
         qualifiedAt: qualification === 'qualified' ? now : null,
+        leadScore: scored?.score ?? null,
+        leadGrade: scored?.grade ?? null,
+        leadScoreReasons: scored?.reasons ?? null,
       })
       .returning({ id: lead.id });
     const leadId = leadRow!.id;
@@ -332,6 +346,24 @@ export async function submitProject(db: Database, args: SubmitArgs): Promise<Int
         budgetKnown: budget.known,
       },
     });
+
+    if (scored) {
+      // Allow-listed properties only — never `reasons` (operator-only, via
+      // the ops page/audit log) and never any raw answer/contact value.
+      await track(tx, {
+        name: 'lead_scored',
+        marketplaceId,
+        entityType: 'lead',
+        entityId: leadId,
+        properties: {
+          marketplaceSlug: config.slug,
+          questionnaireVersion: config.questionnaire.version,
+          leadGrade: scored.grade,
+          leadScore: scored.score,
+          serviceable,
+        },
+      });
+    }
 
     await recordAudit(tx, {
       actor: { type: 'consumer' },

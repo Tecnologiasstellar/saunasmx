@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@/modules/errors';
 import { loadMarketplaceConfigs } from '@/modules/marketplace-config/loader';
+import { findSelectOptions } from '@/modules/marketplace-config/types';
 import { allowedServiceKeys, parseCoverage, type CoverageInput } from '@/modules/provider/coverage';
 
 /**
@@ -48,8 +49,8 @@ describe('allowed service keys come from configuration', () => {
   });
 
   it('never offers "unsure" as a service a provider can claim', () => {
-    const step = suanas.questionnaire.steps.find((candidate) => candidate.id === 'type');
-    expect(step && 'options' in step ? step.options.map((option) => option.value) : []).toContain('unsure');
+    const options = findSelectOptions(suanas.questionnaire, 'type') ?? [];
+    expect(options.map((option) => option.value)).toContain('unsure');
     expect(allowedServiceKeys(suanas)).not.toContain('unsure');
   });
 });

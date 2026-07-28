@@ -15,6 +15,13 @@
       "when": 1785208405709,
       "tag": "0001_good_matthew_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785261474906,
+      "tag": "0002_perpetual_kylun",
+      "breakpoints": true
     }
   ]
 }

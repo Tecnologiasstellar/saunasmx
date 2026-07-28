@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { MarketplaceConfig, Questionnaire } from '../marketplace-config/types';
+import type { GroupField, MarketplaceConfig, Questionnaire } from '../marketplace-config/types';
 
 /**
  * Builds the project-intake input schema from a marketplace's questionnaire.
@@ -16,6 +16,20 @@ export const CONSENT_PURPOSE_LEAD_CONTACT = 'lead_contact';
 export function answerSteps(questionnaire: Questionnaire) {
   return questionnaire.steps.filter(
     (step) => step.type === 'single_select' || step.type === 'multi_select' || step.type === 'long_text',
+  );
+}
+
+/**
+ * Field ids reserved for the intake payload's `location` object — see
+ * marketplace-config/schema.ts. Every other group field lands in `answers`,
+ * same as a `single_select` step's answer would.
+ */
+export const LOCATION_FIELD_IDS = new Set(['postal_code', 'city', 'state', 'street_address']);
+
+/** Group-step fields that answer into `answers`, i.e. every field except the reserved location ones. */
+export function groupAnswerFields(questionnaire: Questionnaire): GroupField[] {
+  return questionnaire.steps.flatMap((step) =>
+    step.type === 'group' ? step.fields.filter((field) => !LOCATION_FIELD_IDS.has(field.id)) : [],
   );
 }
 
@@ -88,6 +102,35 @@ export function buildIntakeSchema(config: MarketplaceConfig) {
     }
   }
 
+  // Group-step fields (e.g. the sauna type/setting/capacity screen) answer
+  // into `answers` exactly like a single_select step would. A field with
+  // `showIf` can't be required at the type level — visibility depends on a
+  // sibling field's answer — so it's always optional here; the superRefine
+  // below enforces "required when visible" once the whole `answers` object
+  // is available to check against.
+  for (const field of groupAnswerFields(questionnaire)) {
+    const conditional = Boolean(field.showIf);
+    if (field.kind === 'text') {
+      const base = z.string().trim();
+      let value: z.ZodTypeAny;
+      if (field.pattern) {
+        const regex = new RegExp(field.pattern);
+        value = conditional
+          ? base.refine((candidate) => candidate.length === 0 || regex.test(candidate), field.patternMessage ?? 'Formato inválido')
+          : base.regex(regex, field.patternMessage ?? 'Formato inválido');
+      } else {
+        value = conditional ? base : base.min(1, 'Este campo es obligatorio');
+      }
+      answerShape[field.id] = conditional || !field.required ? value.optional() : value;
+    } else {
+      const allowed = field.options.map((option) => option.value);
+      const value = z.string().refine((candidate) => allowed.includes(candidate), {
+        message: 'Selecciona una de las opciones disponibles',
+      });
+      answerShape[field.id] = conditional || !field.required ? value.optional() : value;
+    }
+  }
+
   const contact = contactStep(questionnaire);
   const contactFields = contact?.type === 'contact' ? contact.fields : ['name', 'email', 'phone'];
 
@@ -96,13 +139,19 @@ export function buildIntakeSchema(config: MarketplaceConfig) {
   if (contactFields.includes('email')) contactShape.email = z.string().trim().toLowerCase().pipe(z.email('Introduce un correo válido'));
   if (contactFields.includes('phone')) contactShape.phone = phone;
 
-  return z.object({
+  const schema = z.object({
     marketplaceSlug: z.literal(config.slug),
     contact: z.object(contactShape),
     location: z.object({
       postalCode,
       city: z.string().trim().max(120).optional(),
       state: z.string().trim().max(120).optional(),
+      /**
+       * Optional. Never used for eligibility/matching, never leaves
+       * project_location into analytics, logs, outbox payloads or
+       * notifications (see submit-project.ts and docs/10-security-privacy.md).
+       */
+      streetAddress: z.string().trim().max(200).optional(),
     }),
     answers: z.object(answerShape),
     consent: z.object({
@@ -137,6 +186,28 @@ export function buildIntakeSchema(config: MarketplaceConfig) {
       .regex(/^[a-z0-9-]+$/, 'Proveedor no válido')
       .optional(),
     idempotencyKey: z.string().trim().min(8).max(200),
+  });
+
+  // A group field's showIf makes it required only when visible — checked here
+  // rather than at the field's own type, since visibility depends on a
+  // sibling answer that's only available once the whole object has parsed.
+  return schema.superRefine((value, ctx) => {
+    for (const field of groupAnswerFields(questionnaire)) {
+      if (!field.required || !field.showIf) continue;
+      const siblingValue = value.answers[field.showIf.field];
+      const visible =
+        field.showIf.equals !== undefined
+          ? siblingValue === field.showIf.equals
+          : field.showIf.notEquals !== undefined
+            ? siblingValue !== field.showIf.notEquals
+            : true;
+      if (!visible) continue;
+      const current = value.answers[field.id];
+      const empty = current === undefined || (typeof current === 'string' && current.trim().length === 0);
+      if (empty) {
+        ctx.addIssue({ code: 'custom', path: ['answers', field.id], message: 'Este campo es obligatorio' });
+      }
+    }
   });
 }
 

@@ -28,33 +28,44 @@ test('consumer submits a sauna project through the configured questionnaire', as
   await page.getByTestId('primary-cta').click();
   await expect(page).toHaveURL(/\/cotizar/);
 
-  await page.getByTestId('input-postal-code').fill('01000');
+  // Paso 1 de 7 — ubicación (a group step: state/city/postal code, street optional).
+  await expect(page.getByText('Paso 1 de 7')).toBeVisible();
+  await page.getByTestId('option-state-ciudad_de_mexico').click();
+  await page.getByTestId('input-city').fill('Miguel Hidalgo');
+  await page.getByTestId('input-postal_code').fill('01000');
   await page.getByTestId('next').click();
 
-  await page.getByTestId('option-setting-indoor').click();
-  await page.getByTestId('next').click();
-
+  // Paso 2 de 7 — especificaciones.
   await page.getByTestId('option-type-traditional').click();
-  await page.getByTestId('next').click();
-
+  await page.getByTestId('option-setting-indoor').click();
   await page.getByTestId('option-capacity-4').click();
   await page.getByTestId('next').click();
 
-  await page.getByTestId('option-budget-100000_200000').click();
+  // Paso 3 de 7 — etapa del proyecto, con el campo condicional visible.
+  await page.getByTestId('option-project_stage-space_ready').click();
+  await expect(page.getByTestId('option-professional_involved-architect')).toBeVisible();
+  await page.getByTestId('option-professional_involved-architect').click();
   await page.getByTestId('next').click();
 
-  await page.getByTestId('option-timeline-now').click();
+  // Paso 4 de 7 — presupuesto.
+  await page.getByTestId('option-budget-150000_300000').click();
   await page.getByTestId('next').click();
 
-  // The notes step is optional; skipping it must be allowed.
+  // Paso 5 de 7 — plazo.
+  await page.getByTestId('option-timeline-one_to_three_months').click();
   await page.getByTestId('next').click();
 
+  // Paso 6 de 7 — autoridad de decisión.
+  await page.getByTestId('option-decision_authority-owner_primary').click();
+  await page.getByTestId('next').click();
+
+  // Paso 7 de 7 — contacto y los dos consentimientos, en la misma pantalla.
+  await expect(page.getByText('Paso 7 de 7')).toBeVisible();
   await page.getByTestId('input-name').fill('Ana Prueba E2E');
   await page.getByTestId('input-email').fill(CONSUMER_EMAIL);
   await page.getByTestId('input-phone').fill('5512345678');
-  await page.getByTestId('next').click();
-
-  await page.getByTestId('input-consent').check();
+  await page.getByTestId('input-consent-lead_contact').check();
+  await page.getByTestId('input-consent-provider_sharing').check();
   await page.getByTestId('submit').click();
 
   await expect(page).toHaveURL(/\/gracias/);

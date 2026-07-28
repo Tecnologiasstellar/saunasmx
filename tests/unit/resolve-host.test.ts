@@ -23,7 +23,7 @@ function config(slug: string, domain: string, aliases: string[] = []): Marketpla
     contact: { legalName: 'Test SA de CV', email: 'hola@example.com', social: { instagram: null, tiktok: null } },
     features: {},
     seo: { defaultIndexing: true, pageEligibility: 'x', primaryCta: 'y' },
-    questionnaire: { id: 'q', version: 1, locale: 'es-MX', steps: [] },
+    questionnaire: { id: 'q', version: 1, locale: 'es-MX', submitLabel: 'Enviar proyecto', steps: [] },
     matching: {
       version: 1,
       reviewPolicy: 'manual',

@@ -148,3 +148,64 @@ export async function discardLead(
     return { changed: true, lifecycleStatus: 'rejected' };
   });
 }
+
+/**
+ * Human validation of a lead's WhatsApp reachability.
+ *
+ * A grade-A lead is never sold to a provider as "verified" on the strength of
+ * the questionnaire alone — only once an operator has actually reached the
+ * consumer does `contactValidationStatus` move to `contact_confirmed`.
+ */
+export async function confirmLeadContact(
+  db: Database,
+  args: { leadId: string; marketplaceId: string; actor: Actor; correlationId: string; now?: Date },
+): Promise<void> {
+  const now = args.now ?? new Date();
+  await db.transaction(async (tx) => {
+    const [leadRow] = await tx.select().from(lead).where(eq(lead.id, args.leadId)).limit(1);
+    if (!leadRow) throw new DomainError(ERROR_CODES.LEAD_NOT_FOUND, 'Lead not found', 404);
+
+    await tx
+      .update(lead)
+      .set({ contactValidationStatus: 'contact_confirmed', contactConfirmedAt: now })
+      .where(eq(lead.id, args.leadId));
+
+    await track(tx, {
+      name: 'lead_contact_confirmed',
+      marketplaceId: args.marketplaceId,
+      entityType: 'lead',
+      entityId: args.leadId,
+      properties: { leadGrade: leadRow.leadGrade, leadScore: leadRow.leadScore },
+    });
+
+    await recordAudit(tx, {
+      actor: args.actor,
+      action: 'lead.contact_confirmed',
+      entityType: 'lead',
+      entityId: args.leadId,
+      marketplaceId: args.marketplaceId,
+      metadata: { correlationId: args.correlationId },
+    });
+  });
+}
+
+export async function markLeadUnreachable(
+  db: Database,
+  args: { leadId: string; marketplaceId: string; actor: Actor; correlationId: string },
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [leadRow] = await tx.select().from(lead).where(eq(lead.id, args.leadId)).limit(1);
+    if (!leadRow) throw new DomainError(ERROR_CODES.LEAD_NOT_FOUND, 'Lead not found', 404);
+
+    await tx.update(lead).set({ contactValidationStatus: 'unreachable' }).where(eq(lead.id, args.leadId));
+
+    await recordAudit(tx, {
+      actor: args.actor,
+      action: 'lead.contact_unreachable',
+      entityType: 'lead',
+      entityId: args.leadId,
+      marketplaceId: args.marketplaceId,
+      metadata: { correlationId: args.correlationId },
+    });
+  });
+}

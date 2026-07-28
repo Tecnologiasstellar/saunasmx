@@ -4,7 +4,7 @@ import { requireOperator } from '@/modules/auth/current-user';
 import { getDb } from '@/modules/database/client';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { rankProvidersForLead } from '@/modules/matching-engine/assign';
-import { discardLeadAction, qualifyLeadAction } from '@/modules/ops/actions';
+import { confirmLeadContactAction, discardLeadAction, markLeadUnreachableAction, qualifyLeadAction } from '@/modules/ops/actions';
 import { AssignForm } from '@/modules/ops/assign-form';
 import { getLeadDetail } from '@/modules/ops/queries';
 import { resolveRequestHost } from '@/modules/site/context';
@@ -25,7 +25,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
   if (!detail) notFound();
 
   const ranked = await rankProvidersForLead(db, { leadId, config, marketplaceId });
-  const canAssign = ['ready_for_matching', 'assigned'].includes(detail.lifecycleStatus);
+  const canAssign = ['ready_for_matching', 'assigned'].includes(detail.lifecycleStatus) && detail.leadGrade !== 'C';
+  const isVerifiedA = detail.leadGrade === 'A' && detail.contactValidationStatus === 'contact_confirmed';
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -36,6 +37,46 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
       <p className="text-[var(--ink-muted)]">
         {detail.lifecycleStatus} · calificación: <span data-testid="qualification">{detail.qualificationStatus}</span>
       </p>
+
+      {detail.leadGrade ? (
+        <section className="mt-6 rounded-[var(--radius)] border border-[var(--border)] p-4" data-testid="lead-grade">
+          <p className="font-semibold">
+            Lead {detail.leadGrade}
+            {isVerifiedA ? <span className="ml-2 text-sm font-normal text-[var(--ink-muted)]">(A verificado)</span> : null}
+            {detail.leadScore !== null ? <span className="ml-2 text-sm font-normal text-[var(--ink-muted)]">score {detail.leadScore}</span> : null}
+          </p>
+          <p className="mt-1 text-sm text-[var(--ink-muted)]">
+            Validación de contacto: <span data-testid="contact-validation-status">{detail.contactValidationStatus}</span>
+          </p>
+          {detail.leadScoreReasons ? (
+            <ul className="mt-2 list-disc pl-6 text-sm text-[var(--ink-muted)]">
+              {detail.leadScoreReasons.map((reason, index) => (
+                <li key={index}>{reason}</li>
+              ))}
+            </ul>
+          ) : null}
+          {detail.contactValidationStatus === 'pending_contact' ? (
+            <div className="mt-3 flex flex-wrap gap-3">
+              <form action={confirmLeadContactAction}>
+                <input type="hidden" name="leadId" value={leadId} />
+                <button
+                  type="submit"
+                  data-testid="confirm-contact"
+                  className="rounded-[var(--radius)] bg-[var(--brand)] px-4 py-2 text-sm font-medium text-[var(--brand-ink)]"
+                >
+                  Confirmar contacto
+                </button>
+              </form>
+              <form action={markLeadUnreachableAction}>
+                <input type="hidden" name="leadId" value={leadId} />
+                <button type="submit" data-testid="mark-unreachable" className="rounded-[var(--radius)] border border-[var(--border)] px-4 py-2 text-sm">
+                  No localizable
+                </button>
+              </form>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="mt-8 grid gap-6 sm:grid-cols-2">
         <div>
@@ -48,6 +89,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
           <h2 className="font-semibold">Ubicación</h2>
           <p className="text-sm">CP {detail.location?.postalCode ?? '—'}</p>
           <p className="text-sm text-[var(--ink-muted)]">{detail.location?.city ?? ''}</p>
+          {detail.location?.streetAddress ? (
+            <p className="text-sm text-[var(--ink-muted)]" data-testid="street-address">
+              {detail.location.streetAddress}
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -113,10 +159,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
               reasons: evaluation.reasons,
             }))}
           />
-        ) : (
-          <p className="mt-2 text-[var(--ink-muted)]">
-            Califica el proyecto para poder asignar proveedores.
+        ) : detail.leadGrade === 'C' ? (
+          <p className="mt-2 text-[var(--ink-muted)]" data-testid="grade-c-notice">
+            Lead C: no se asigna automáticamente a proveedores. Envía a nutrición/contenido o revisión manual.
           </p>
+        ) : (
+          <p className="mt-2 text-[var(--ink-muted)]">Califica el proyecto para poder asignar proveedores.</p>
         )}
       </section>
 

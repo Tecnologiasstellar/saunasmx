@@ -1,42 +1,216 @@
 {
-  "id": "sauna-residential-v1",
-  "version": 1,
+  "id": "sauna-residential-v2",
+  "version": 2,
   "locale": "es-MX",
+  "submitLabel": "Enviar mi proyecto",
   "steps": [
-    {"id":"location","type":"postal_code","label":"¿Dónde se instalaría?","required":true},
-    {"id":"setting","type":"single_select","label":"¿Dónde quieres tu sauna?","required":true,"options":[
-      {"value":"indoor","label":"Bajo techo"},
-      {"value":"outdoor","label":"Al aire libre"},
-      {"value":"unsure","label":"Todavía no lo decido"}
-    ]},
-    {"id":"type","type":"single_select","label":"¿Qué tipo te interesa?","required":true,"options":[
-      {"value":"traditional","label":"Sauna tradicional (piedras y calor seco)"},
-      {"value":"infrared","label":"Sauna infrarroja"},
-      {"value":"steam","label":"Baño de vapor"},
-      {"value":"unsure","label":"Quiero que me asesoren"}
-    ]},
-    {"id":"capacity","type":"single_select","label":"¿Para cuántas personas?","required":true,"options":[
-      2,
-      4,
-      6,
-      8,
-      {"value":"more_than_8","label":"Más de 8"}
-    ]},
-    {"id":"budget","type":"single_select","label":"¿Cuál es tu presupuesto estimado?","required":true,"options":[
-      {"value":"under_50000","label":"Menos de $50,000 MXN"},
-      {"value":"50000_100000","label":"$50,000 – $100,000 MXN"},
-      {"value":"100000_200000","label":"$100,000 – $200,000 MXN"},
-      {"value":"over_200000","label":"Más de $200,000 MXN"},
-      {"value":"unsure","label":"Aún no lo sé"}
-    ]},
-    {"id":"timeline","type":"single_select","label":"¿Cuándo te gustaría hacerlo?","required":true,"options":[
-      {"value":"now","label":"Lo antes posible"},
-      {"value":"one_to_three_months","label":"En 1 a 3 meses"},
-      {"value":"six_months","label":"En unos 6 meses"},
-      {"value":"researching","label":"Sólo estoy investigando"}
-    ]},
-    {"id":"notes","type":"long_text","label":"Cuéntanos un poco más","required":false,"maxLength":2000},
-    {"id":"contact","type":"contact","label":"¿A dónde te enviamos opciones?","required":true,"fields":["name","email","phone"]},
-    {"id":"consent","type":"consent","label":"Acepto que Saunas.mx comparta mis datos con proveedores relevantes para responder a mi proyecto. Ver Aviso de Privacidad.","required":true}
+    {
+      "id": "location",
+      "type": "group",
+      "label": "¿Dónde se instalaría?",
+      "required": true,
+      "fields": [
+        {
+          "id": "state",
+          "kind": "select",
+          "label": "Estado",
+          "required": true,
+          "options": [
+            {"value": "aguascalientes", "label": "Aguascalientes"},
+            {"value": "baja_california", "label": "Baja California"},
+            {"value": "baja_california_sur", "label": "Baja California Sur"},
+            {"value": "campeche", "label": "Campeche"},
+            {"value": "chiapas", "label": "Chiapas"},
+            {"value": "chihuahua", "label": "Chihuahua"},
+            {"value": "ciudad_de_mexico", "label": "Ciudad de México"},
+            {"value": "coahuila", "label": "Coahuila"},
+            {"value": "colima", "label": "Colima"},
+            {"value": "durango", "label": "Durango"},
+            {"value": "estado_de_mexico", "label": "Estado de México"},
+            {"value": "guanajuato", "label": "Guanajuato"},
+            {"value": "guerrero", "label": "Guerrero"},
+            {"value": "hidalgo", "label": "Hidalgo"},
+            {"value": "jalisco", "label": "Jalisco"},
+            {"value": "michoacan", "label": "Michoacán"},
+            {"value": "morelos", "label": "Morelos"},
+            {"value": "nayarit", "label": "Nayarit"},
+            {"value": "nuevo_leon", "label": "Nuevo León"},
+            {"value": "oaxaca", "label": "Oaxaca"},
+            {"value": "puebla", "label": "Puebla"},
+            {"value": "queretaro", "label": "Querétaro"},
+            {"value": "quintana_roo", "label": "Quintana Roo"},
+            {"value": "san_luis_potosi", "label": "San Luis Potosí"},
+            {"value": "sinaloa", "label": "Sinaloa"},
+            {"value": "sonora", "label": "Sonora"},
+            {"value": "tabasco", "label": "Tabasco"},
+            {"value": "tamaulipas", "label": "Tamaulipas"},
+            {"value": "tlaxcala", "label": "Tlaxcala"},
+            {"value": "veracruz", "label": "Veracruz"},
+            {"value": "yucatan", "label": "Yucatán"},
+            {"value": "zacatecas", "label": "Zacatecas"}
+          ]
+        },
+        {
+          "id": "city",
+          "kind": "text",
+          "label": "Ciudad, alcaldía o municipio",
+          "required": true,
+          "placeholder": "Ej. Miguel Hidalgo, Zapopan o San Pedro Garza García"
+        },
+        {
+          "id": "postal_code",
+          "kind": "text",
+          "label": "Código postal",
+          "required": true,
+          "placeholder": "00000",
+          "pattern": "^\\d{5}$",
+          "patternMessage": "Introduce un código postal de 5 dígitos"
+        },
+        {
+          "id": "street_address",
+          "kind": "text",
+          "label": "Calle y número aproximado (opcional)",
+          "required": false,
+          "placeholder": "Ej. Sierra Madre 123, Lomas"
+        }
+      ],
+      "help": "Nos ayuda a entender el acceso y la viabilidad. No se usa para mostrarte públicamente ni se comparte antes de que autorices el contacto."
+    },
+    {
+      "id": "specs",
+      "type": "group",
+      "label": "Cuéntanos sobre tu sauna",
+      "required": true,
+      "fields": [
+        {
+          "id": "type",
+          "kind": "select",
+          "label": "¿Qué tipo de instalación te interesa?",
+          "required": true,
+          "options": [
+            {"value": "traditional", "label": "Sauna tradicional (piedras y calor seco)"},
+            {"value": "infrared", "label": "Sauna infrarroja"},
+            {"value": "steam", "label": "Baño de vapor"},
+            {"value": "unsure", "label": "Aún no lo sé; quiero asesoría"}
+          ]
+        },
+        {
+          "id": "setting",
+          "kind": "select",
+          "label": "¿Dónde quieres instalarla?",
+          "required": true,
+          "options": [
+            {"value": "indoor", "label": "Bajo techo"},
+            {"value": "outdoor", "label": "Al aire libre"},
+            {"value": "unsure", "label": "Aún no lo decido"}
+          ]
+        },
+        {
+          "id": "capacity",
+          "kind": "select",
+          "label": "¿Para cuántas personas?",
+          "required": true,
+          "options": [
+            {"value": "2", "label": "1–2 personas"},
+            {"value": "4", "label": "3–4 personas"},
+            {"value": "6", "label": "5–6 personas"},
+            {"value": "8", "label": "7–8 personas"},
+            {"value": "more_than_8", "label": "Más de 8 personas"},
+            {"value": "unsure", "label": "Aún no lo sé"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stage",
+      "type": "group",
+      "label": "¿En qué etapa está tu proyecto?",
+      "required": true,
+      "fields": [
+        {
+          "id": "project_stage",
+          "kind": "select",
+          "label": "¿En qué etapa está tu proyecto?",
+          "required": true,
+          "options": [
+            {"value": "space_ready", "label": "Ya tengo el espacio listo para instalar"},
+            {"value": "construction_or_remodel", "label": "Está en construcción o remodelación"},
+            {"value": "planning", "label": "Estoy planeando la obra o remodelación"},
+            {"value": "researching", "label": "Sólo estoy explorando ideas"}
+          ]
+        },
+        {
+          "id": "professional_involved",
+          "kind": "select",
+          "label": "¿Ya cuentas con un profesional para el proyecto?",
+          "required": true,
+          "showIf": {"field": "project_stage", "notEquals": "researching"},
+          "options": [
+            {"value": "architect", "label": "Sí, arquitecto/a o diseñador/a"},
+            {"value": "contractor", "label": "Sí, constructor/a o contratista"},
+            {"value": "both", "label": "Sí, ambos"},
+            {"value": "none", "label": "No todavía"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "budget",
+      "type": "single_select",
+      "label": "¿Cuál es tu presupuesto estimado?",
+      "required": true,
+      "help": "Usamos este rango para conectarte sólo con proveedores adecuados para tu proyecto.",
+      "options": [
+        {"value": "under_50000", "label": "Menos de $50,000 MXN"},
+        {"value": "50000_100000", "label": "$50,000 – $100,000 MXN"},
+        {"value": "100000_150000", "label": "$100,000 – $150,000 MXN"},
+        {"value": "150000_300000", "label": "$150,000 – $300,000 MXN"},
+        {"value": "over_300000", "label": "Más de $300,000 MXN"},
+        {"value": "unsure", "label": "Aún no lo sé"}
+      ]
+    },
+    {
+      "id": "timeline",
+      "type": "single_select",
+      "label": "¿Cuándo te gustaría iniciar?",
+      "required": true,
+      "options": [
+        {"value": "under_30_days", "label": "En los próximos 30 días"},
+        {"value": "one_to_three_months", "label": "En 1 a 3 meses"},
+        {"value": "three_to_six_months", "label": "En 3 a 6 meses"},
+        {"value": "over_six_months", "label": "En más de 6 meses"},
+        {"value": "researching", "label": "Sólo estoy investigando"}
+      ]
+    },
+    {
+      "id": "decision_authority",
+      "type": "single_select",
+      "label": "¿Cuál es tu papel en el proyecto?",
+      "required": true,
+      "options": [
+        {"value": "owner_primary", "label": "Soy propietario/a y puedo tomar la decisión"},
+        {"value": "owner_joint", "label": "Soy propietario/a y decidimos entre varias personas"},
+        {"value": "professional", "label": "Soy arquitecto/a, constructor/a o diseñador/a responsable"},
+        {"value": "researching_for_other", "label": "Estoy investigando para alguien más"}
+      ]
+    },
+    {
+      "id": "contact",
+      "type": "contact",
+      "label": "¿A dónde te enviamos opciones?",
+      "required": true,
+      "fields": ["name", "email", "phone"],
+      "phoneLabel": "WhatsApp",
+      "consents": [
+        {
+          "purpose": "lead_contact",
+          "label": "Autorizo a Saunas.mx a contactarme por WhatsApp en las próximas 24 horas para confirmar mi proyecto."
+        },
+        {
+          "purpose": "provider_sharing",
+          "label": "Acepto que Saunas.mx comparta mi proyecto con hasta dos proveedores relevantes para responder a mi solicitud. Ver Aviso de Privacidad."
+        }
+      ]
+    }
   ]
 }

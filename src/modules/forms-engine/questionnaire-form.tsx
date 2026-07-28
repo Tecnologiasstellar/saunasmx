@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Questionnaire, QuestionnaireStep } from '../marketplace-config/types';
+import type { GroupField, Questionnaire, QuestionnaireStep } from '../marketplace-config/types';
 import { buttonClass } from '../ui/primitives';
 import { PRIVACY_POLICY_VERSION } from './policy';
 
@@ -11,15 +11,36 @@ import { PRIVACY_POLICY_VERSION } from './policy';
  *
  * Every field, option and label comes from the marketplace's questionnaire
  * JSON. There is no category-specific code here — this component renders the
- * sauna and pergola questionnaires identically (ADR-006).
+ * sauna and pergola questionnaires identically (ADR-006), including the
+ * "group" step type that bundles several fields onto one screen.
  *
  * The server re-validates everything; client checks only keep the form kind.
  */
 
 type Answers = Record<string, string>;
 type Contact = { name: string; email: string; phone: string };
+/** The four field ids that route into the intake payload's `location` object rather than `answers`. */
+type Location = { postalCode: string; city: string; state: string; streetAddress: string };
 
 type FieldError = { field: string; message: string };
+
+/** Group-field ids that route into `location` (camelCase keys) instead of `answers`. */
+const LOCATION_FIELD_MAP: Record<string, keyof Location> = {
+  postal_code: 'postalCode',
+  city: 'city',
+  state: 'state',
+  street_address: 'streetAddress',
+};
+
+function beacon(marketplaceSlug: string, name: string, properties: Record<string, string | number>) {
+  try {
+    const body = JSON.stringify({ name, ...properties });
+    const blob = new Blob([body], { type: 'application/json' });
+    navigator.sendBeacon?.(`/api/marketplaces/${marketplaceSlug}/events`, blob);
+  } catch {
+    // Best-effort only — analytics must never break the questionnaire.
+  }
+}
 
 export function QuestionnaireForm({
   questionnaire,
@@ -50,37 +71,102 @@ export function QuestionnaireForm({
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
-  const [postalCode, setPostalCode] = useState(initialPostalCode);
+  const [location, setLocation] = useState<Location>({ postalCode: initialPostalCode, city: '', state: '', streetAddress: '' });
   const [contact, setContact] = useState<Contact>({ name: '', email: '', phone: '' });
   const [consent, setConsent] = useState(false);
+  const [consents, setConsents] = useState<Record<string, boolean>>({});
   const [localError, setLocalError] = useState<string | null>(null);
   const [serverErrors, setServerErrors] = useState<FieldError[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
 
   // One key per form instance: a double-click or a retried request cannot
   // create two projects.
   const idempotencyKey = useMemo(() => crypto.randomUUID(), []);
 
   const step = steps[index];
+
+  function getValue(id: string): string {
+    const locationKey = LOCATION_FIELD_MAP[id];
+    return locationKey ? location[locationKey] : (answers[id] ?? '');
+  }
+
+  function setValue(id: string, value: string) {
+    const locationKey = LOCATION_FIELD_MAP[id];
+    if (locationKey) {
+      setLocation((current) => ({ ...current, [locationKey]: value }));
+    } else {
+      setAnswers((current) => ({ ...current, [id]: value }));
+    }
+  }
+
+  function fieldVisible(field: GroupField): boolean {
+    if (!field.showIf) return true;
+    const value = getValue(field.showIf.field);
+    if (field.showIf.equals !== undefined) return value === field.showIf.equals;
+    if (field.showIf.notEquals !== undefined) return value !== field.showIf.notEquals;
+    return true;
+  }
+
+  // Funnel analytics — best-effort, no PII (see events route for the allow-list).
+  useEffect(() => {
+    beacon(marketplaceSlug, 'questionnaire_started', { questionnaireVersion: questionnaire.version });
+    const onHide = () => {
+      if (!submittedRef.current) {
+        beacon(marketplaceSlug, 'questionnaire_abandoned', {
+          questionnaireVersion: questionnaire.version,
+          stepId: steps[index]?.id ?? '',
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!step) return;
+    beacon(marketplaceSlug, 'questionnaire_step_viewed', { questionnaireVersion: questionnaire.version, stepId: step.id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
   if (!step) return null;
 
   const isLast = index === steps.length - 1;
+  const contactConsents = step.type === 'contact' ? (step.consents ?? []) : [];
+  const usesEmbeddedConsents = contactConsents.length > 0;
+
+  function groupFieldAnswered(field: GroupField): boolean {
+    if (!fieldVisible(field)) return true;
+    if (!field.required) return true;
+    const value = getValue(field.id);
+    if (value.trim().length === 0) return false;
+    if (field.kind === 'text' && field.pattern) return new RegExp(field.pattern).test(value);
+    return true;
+  }
 
   function stepIsAnswered(current: QuestionnaireStep): boolean {
-    if (!current.required) return true;
     switch (current.type) {
       case 'postal_code':
-        return /^\d{5}$/.test(postalCode);
+        return !current.required || /^\d{5}$/.test(location.postalCode);
       case 'consent':
-        return consent;
-      case 'contact':
-        return (
+        return !current.required || consent;
+      case 'contact': {
+        const fieldsOk =
           (!current.fields.includes('name') || contact.name.trim().length >= 2) &&
           (!current.fields.includes('email') || /.+@.+\..+/.test(contact.email)) &&
-          (!current.fields.includes('phone') || contact.phone.replace(/\D/g, '').length >= 10)
-        );
+          (!current.fields.includes('phone') || contact.phone.replace(/\D/g, '').length >= 10);
+        const consentsOk = contactConsents.length === 0 || contactConsents.every((item) => consents[item.purpose]);
+        return fieldsOk && consentsOk;
+      }
+      case 'group':
+        return current.fields.every(groupFieldAnswered);
       default:
-        return (answers[current.id] ?? '').trim().length > 0;
+        return !current.required || (answers[current.id] ?? '').trim().length > 0;
     }
   }
 
@@ -90,6 +176,7 @@ export function QuestionnaireForm({
       return;
     }
     setLocalError(null);
+    beacon(marketplaceSlug, 'questionnaire_step_completed', { questionnaireVersion: questionnaire.version, stepId: step!.id });
     setIndex((value) => Math.min(value + 1, steps.length - 1));
   }
 
@@ -116,12 +203,20 @@ export function QuestionnaireForm({
     }
     if (document.referrer) attribution.referrer = document.referrer.slice(0, 500);
 
+    const leadContact = usesEmbeddedConsents ? (consents.lead_contact ?? false) : consent;
+    const providerSharing = usesEmbeddedConsents ? (consents.provider_sharing ?? false) : consent;
+
     const payload = {
       marketplaceSlug,
       contact: { name: contact.name, email: contact.email, phone: contact.phone },
-      location: { postalCode },
+      location: {
+        postalCode: location.postalCode,
+        city: location.city || undefined,
+        state: location.state || undefined,
+        streetAddress: location.streetAddress || undefined,
+      },
       answers,
-      consent: { leadContact: consent, providerSharing: consent, policyVersion: PRIVACY_POLICY_VERSION },
+      consent: { leadContact, providerSharing, policyVersion: PRIVACY_POLICY_VERSION },
       attribution,
       ...(preferredProviderSlug ? { preferredProviderSlug } : {}),
       idempotencyKey,
@@ -135,6 +230,8 @@ export function QuestionnaireForm({
       });
 
       if (response.ok) {
+        submittedRef.current = true;
+        beacon(marketplaceSlug, 'questionnaire_step_completed', { questionnaireVersion: questionnaire.version, stepId: step!.id });
         router.push('/gracias');
         return;
       }
@@ -152,6 +249,57 @@ export function QuestionnaireForm({
   const inputClass =
     'w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 text-[0.9375rem] text-[var(--ink)] placeholder:text-[var(--ink-subtle)]';
   const fieldLabelClass = 'block text-[0.6875rem] font-bold uppercase tracking-[0.15em] text-[var(--ink-subtle)]';
+
+  function renderOptions(fieldId: string, options: { value: string; label: string }[]) {
+    return options.map((option) => {
+      const selected = getValue(fieldId) === option.value;
+      return (
+        <button
+          key={option.value}
+          type="button"
+          data-testid={`option-${fieldId}-${option.value}`}
+          onClick={() => setValue(fieldId, option.value)}
+          className={`lift flex w-full items-center gap-3 rounded-[var(--radius-card)] px-4 py-4 text-left text-[0.9375rem] hover:border-[var(--brand)] ${
+            selected
+              ? 'border-2 border-[var(--brand)] bg-[var(--surface)] font-semibold'
+              : 'border border-[var(--border)] bg-[var(--canvas)]'
+          }`}
+          aria-pressed={selected}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-4 w-4 flex-none rounded-full border-2 border-[var(--brand)] ${
+              selected ? 'bg-[var(--brand)]' : 'bg-[var(--brand-soft)]'
+            }`}
+          />
+          {option.label}
+        </button>
+      );
+    });
+  }
+
+  function renderGroupField(field: GroupField) {
+    if (!fieldVisible(field)) return null;
+    return (
+      <div key={field.id} className="space-y-2">
+        <label className="block">
+          <span className={fieldLabelClass}>{field.label}</span>
+        </label>
+        {field.kind === 'text' ? (
+          <input
+            data-testid={`input-${field.id}`}
+            className={inputClass}
+            placeholder={field.placeholder}
+            aria-label={field.label}
+            value={getValue(field.id)}
+            onChange={(event) => setValue(field.id, event.target.value)}
+          />
+        ) : (
+          <div className="space-y-2">{renderOptions(field.id, field.options)}</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="gutter mx-auto w-full max-w-[560px] py-10 md:py-16">
@@ -194,39 +342,15 @@ export function QuestionnaireForm({
                 maxLength={5}
                 placeholder="00000"
                 aria-label={step.label}
-                value={postalCode}
-                onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, ''))}
+                value={location.postalCode}
+                onChange={(event) => setLocation((current) => ({ ...current, postalCode: event.target.value.replace(/\D/g, '') }))}
               />
             </label>
           ) : null}
 
-          {step.type === 'single_select'
-            ? step.options.map((option) => {
-                const selected = answers[step.id] === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    data-testid={`option-${step.id}-${option.value}`}
-                    onClick={() => setAnswers((current) => ({ ...current, [step.id]: option.value }))}
-                    className={`lift flex w-full items-center gap-3 rounded-[var(--radius-card)] px-4 py-4 text-left text-[0.9375rem] hover:border-[var(--brand)] ${
-                      selected
-                        ? 'border-2 border-[var(--brand)] bg-[var(--surface)] font-semibold'
-                        : 'border border-[var(--border)] bg-[var(--canvas)]'
-                    }`}
-                    aria-pressed={selected}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`h-4 w-4 flex-none rounded-full border-2 border-[var(--brand)] ${
-                        selected ? 'bg-[var(--brand)]' : 'bg-[var(--brand-soft)]'
-                      }`}
-                    />
-                    {option.label}
-                  </button>
-                );
-              })
-            : null}
+          {step.type === 'single_select' ? renderOptions(step.id, step.options) : null}
+
+          {step.type === 'group' ? <div className="space-y-6">{step.fields.map(renderGroupField)}</div> : null}
 
           {step.type === 'long_text' ? (
             <textarea
@@ -269,7 +393,7 @@ export function QuestionnaireForm({
               ) : null}
               {step.fields.includes('phone') ? (
                 <label className="block">
-                  <span className={fieldLabelClass}>Teléfono (10 dígitos)</span>
+                  <span className={fieldLabelClass}>{step.phoneLabel ?? 'Teléfono'} (10 dígitos)</span>
                   <input
                     data-testid="input-phone"
                     type="tel"
@@ -280,6 +404,21 @@ export function QuestionnaireForm({
                   />
                 </label>
               ) : null}
+              {contactConsents.map((item) => (
+                <label
+                  key={item.purpose}
+                  className="flex items-start gap-3 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--canvas)] p-4"
+                >
+                  <input
+                    data-testid={`input-consent-${item.purpose}`}
+                    type="checkbox"
+                    className="mt-1 h-5 w-5 flex-none accent-[var(--brand)]"
+                    checked={consents[item.purpose] ?? false}
+                    onChange={(event) => setConsents((current) => ({ ...current, [item.purpose]: event.target.checked }))}
+                  />
+                  <span className="text-[0.9375rem] leading-relaxed text-[var(--ink)]">{item.label}</span>
+                </label>
+              ))}
             </>
           ) : null}
 
@@ -331,9 +470,9 @@ export function QuestionnaireForm({
             data-testid={isLast ? 'submit' : 'next'}
             className={buttonClass('primary', 'px-7 py-3.5')}
             onClick={isLast ? submit : next}
-            disabled={submitting}
+            disabled={submitting || (isLast && !stepIsAnswered(step))}
           >
-            {isLast ? (submitting ? 'Enviando…' : 'Enviar proyecto') : 'Continuar'}
+            {isLast ? (submitting ? 'Enviando…' : questionnaire.submitLabel) : 'Continuar'}
             {isLast ? null : <span aria-hidden="true">→</span>}
           </button>
         </div>

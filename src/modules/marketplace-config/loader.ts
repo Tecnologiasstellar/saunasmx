@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
+import { leadScoringFileSchema } from '../lead-scoring/schema';
 import {
   marketplaceFileSchema,
   matchingFileSchema,
@@ -12,6 +13,7 @@ import {
 } from './schema';
 import {
   ConfigValidationError,
+  type LeadScoringConfig,
   type MarketplaceConfig,
   type MatchingConfig,
   type Questionnaire,
@@ -42,11 +44,16 @@ function toQuestionnaire(file: QuestionnaireFile): Questionnaire {
       case 'single_select':
       case 'multi_select':
         return { ...step, options: toOptions(step.options) };
+      case 'group':
+        return {
+          ...step,
+          fields: step.fields.map((field) => (field.kind === 'select' ? { ...field, options: toOptions(field.options) } : field)),
+        };
       default:
         return step;
     }
   });
-  return { id: file.id, version: file.version, locale: file.locale, steps };
+  return { id: file.id, version: file.version, locale: file.locale, submitLabel: file.submitLabel, steps };
 }
 
 function toMatching(file: MatchingFile): MatchingConfig {
@@ -65,6 +72,34 @@ function toMatching(file: MatchingFile): MatchingConfig {
 
 function readFile(path: string): string {
   return readFileSync(path, 'utf8');
+}
+
+/** Finds a step or group-field by id, treating both as equivalent "answer sources". */
+function findAnswerSource(
+  questionnaire: Questionnaire,
+  id: string,
+): { kind: 'step'; type: QuestionnaireStep['type'] } | { kind: 'group_field'; type: 'text' | 'select' } | null {
+  const step = questionnaire.steps.find((candidate) => candidate.id === id);
+  if (step) return { kind: 'step', type: step.type };
+  for (const candidate of questionnaire.steps) {
+    if (candidate.type !== 'group') continue;
+    const field = candidate.fields.find((f) => f.id === id);
+    if (field) return { kind: 'group_field', type: field.kind };
+  }
+  return null;
+}
+
+/** Every id in the questionnaire that produces a selectable/text answer value. */
+function answerFieldIds(questionnaire: Questionnaire): Set<string> {
+  const ids = new Set<string>();
+  for (const step of questionnaire.steps) {
+    if (step.type === 'single_select' || step.type === 'multi_select' || step.type === 'long_text') {
+      ids.add(step.id);
+    } else if (step.type === 'group') {
+      for (const field of step.fields) ids.add(field.id);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -132,25 +167,54 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
   // options so eligibility stays deterministic.
   if (questionnaire && matching) {
     for (const [dimension, stepId] of Object.entries(matching.answerMapping)) {
-      const step = questionnaire.steps.find((candidate) => candidate.id === stepId);
-      if (!step) {
+      const source = findAnswerSource(questionnaire, stepId);
+      if (!source) {
         issues.push(
           `${slugFromDir}/${file.matching}: answer_mapping.${dimension} references step "${stepId}", which the questionnaire does not collect`,
         );
-      } else if (step.type !== 'single_select') {
-        issues.push(
-          `${slugFromDir}/${file.matching}: answer_mapping.${dimension} references step "${stepId}" of type "${step.type}"; it must be single_select`,
-        );
+      } else {
+        const isSingleSelect = source.kind === 'step' ? source.type === 'single_select' : source.type === 'select';
+        if (!isSingleSelect) {
+          issues.push(
+            `${slugFromDir}/${file.matching}: answer_mapping.${dimension} references "${stepId}", which is not a single-select field`,
+          );
+        }
       }
     }
   }
 
-  if (!questionnaire || !matching) return null;
+  let leadScoring: LeadScoringConfig | null | undefined;
+  if (file.lead_scoring) {
+    const leadScoringPath = resolve(dirname(marketplacePath), file.lead_scoring);
+    try {
+      const result = leadScoringFileSchema.safeParse(parseYaml(readFile(leadScoringPath)));
+      if (result.success) {
+        leadScoring = result.data;
+      } else {
+        issues.push(...formatIssues(`${slugFromDir}/${file.lead_scoring}`, result.error));
+      }
+    } catch (error) {
+      issues.push(`${slugFromDir}/${file.lead_scoring}: unreadable — ${(error as Error).message}`);
+    }
+
+    if (questionnaire && leadScoring) {
+      const known = answerFieldIds(questionnaire);
+      const referenced = [...leadScoring.completeness.fields, ...leadScoring.dimensions.map((d) => d.field)];
+      for (const field of referenced) {
+        if (!known.has(field)) {
+          issues.push(`${slugFromDir}/${file.lead_scoring}: references field "${field}", which the questionnaire does not collect`);
+        }
+      }
+    }
+  }
+
+  if (!questionnaire || !matching || (file.lead_scoring && !leadScoring)) return null;
 
   const configVersion = createHash('sha256')
     .update(readFile(marketplacePath))
     .update(readFile(questionnairePath))
     .update(readFile(matchingPath))
+    .update(file.lead_scoring ? readFile(resolve(dirname(marketplacePath), file.lead_scoring)) : '')
     .digest('hex')
     .slice(0, 16);
 
@@ -169,6 +233,7 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
     seo: file.seo,
     questionnaire,
     matching,
+    leadScoring: leadScoring ?? undefined,
     configVersion,
   };
 }
