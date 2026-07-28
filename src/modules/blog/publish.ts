@@ -14,7 +14,7 @@ import { EMBEDDING_DIMENSIONS, posts } from '@/db/schema';
  *   3. Regex mining     → exact °C/°F and minute figures from those snippets
  *   4. Neon             → last 5 published posts, for internal links
  *   5. Claude Opus 5    → ~1,500-word Markdown article + FAQ, structured output
- *   6. Code             → JSON-LD assembled deterministically, never LLM-authored
+ *   6. Code             → claim gate, source allowlist, assembled page, JSON-LD
  *   7. OpenAI           → embedding for semantic internal linking (optional)
  *   8. Neon             → insert
  *
@@ -36,15 +36,47 @@ const LOCALE = 'es-MX';
  * Seeds the keyword hunt, rotating daily so consecutive posts aren't near
  * duplicates. These must be short head terms: keyword_suggestions expands a
  * phrase, so seeding it with a long-tail phrase returns nothing to expand.
+ *
+ * Drawn from the pillar clusters in docs/seo-strategy.md, weighted the way that
+ * document prioritises them: sauna fundamentals and contrast therapy first,
+ * buying intent second, sleep/recovery third. `cluster` becomes the article's
+ * schema.org articleSection, so the corpus is grouped from day one.
+ *
+ * Deliberately absent: sexual health, testosterone, detox and weight loss as
+ * primary topics. The strategy holds those until a qualified reviewer exists,
+ * and an unattended robot is exactly the wrong thing to point at them.
+ *
+ * Every entry below was checked against the live API on 2026-07-27 and returns
+ * suggestions; the count in each comment is what it returned. Seeds that came
+ * back empty ("sauna seca", "sauna y sueño", "mantenimiento de sauna" and five
+ * others) are deliberately absent — keyword_suggestions expands a short head
+ * term, and a phrase that is already long-tail has nothing left to expand.
+ *
+ * The fat seeds are the engine: paired with the already-covered filter in
+ * findKeyword, "sauna" alone can supply distinct targets for weeks, because each
+ * run takes the best keyword no published article has claimed yet.
  */
-const SEED_KEYWORDS = [
-  'baño de hielo',
-  'terapia de contraste',
-  'sauna infrarrojo',
-  'crioterapia',
-  'inmersión en agua fría',
-  'baño de vapor',
-  'sauna en casa',
+const SEEDS: { seed: string; cluster: string }[] = [
+  // Pillar A — sauna fundamentals
+  { seed: 'sauna', cluster: 'Sauna' }, // 50
+  { seed: 'temazcal', cluster: 'Sauna' }, // 50
+  { seed: 'baño de vapor', cluster: 'Sauna' }, // 50
+  { seed: 'sauna infrarrojo', cluster: 'Sauna' }, // 10
+  { seed: 'sauna finlandesa', cluster: 'Sauna' }, // 1
+  { seed: 'beneficios de la sauna', cluster: 'Sauna' }, // 1
+  // Pillar B — contrast therapy and cold
+  { seed: 'crioterapia', cluster: 'Terapia de contraste' }, // 50
+  { seed: 'baño de hielo', cluster: 'Terapia de contraste' }, // 6
+  { seed: 'terapia de contraste', cluster: 'Terapia de contraste' }, // 4
+  { seed: 'ducha fría', cluster: 'Terapia de contraste' }, // 2
+  { seed: 'inmersión en agua fría', cluster: 'Terapia de contraste' }, // 1
+  // Pillar C/D — sleep, recovery, performance
+  { seed: 'recuperación muscular', cluster: 'Sueño y recuperación' }, // 10
+  // Pillar H — buying, installing, running one
+  { seed: 'sauna portátil', cluster: 'Guía para comprar' }, // 9
+  { seed: 'sauna en casa', cluster: 'Guía para comprar' }, // 7
+  { seed: 'instalación de sauna', cluster: 'Guía para comprar' }, // 1
+  { seed: 'sauna para exterior', cluster: 'Guía para comprar' }, // 1
 ];
 
 /** Keywords above this difficulty aren't winnable by a new site. */
@@ -63,17 +95,99 @@ const MIN_SEARCH_VOLUME = 20;
 const OFF_TOPIC = [
   'taza', 'traje', 'mueble', 'azulejo', 'espejo', 'regadera', 'tina para',
   // "hielo seco" is dry ice, but "sauna seco" is ours — match the phrase, not the word.
-  'laboratorio', 'quemadura', 'hielo seco', 'pdf', 'costco', 'descargar', 'precio de',
+  'laboratorio', 'quemadura', 'hielo seco', 'pdf', 'costco', 'descargar',
+  // "sauna disco" (9,900/mo) and "sauna gay" are bathhouses, not equipment.
+  // "cerca de mi" is local intent we have no venue directory to answer.
+  'disco', 'gay', 'cerca de mi', 'masaje', 'hotel', 'gimnasio con',
+  // Plumbing again, from the other direction: "solo sale agua fría en la ducha".
+  'sale agua', 'calentador', 'boiler', 'fuga', 'reparar', 'no calienta',
+  // Prices and models: the robot has no verified supplier data and would invent
+  // figures. Buying *education* (installation, power draw, upkeep) is in scope;
+  // quoting a price is a human's job.
+  'precio', 'cuanto cuesta', 'venta de', 'comprar',
+  // Claim territory the strategy holds back until a clinical reviewer exists.
+  // Blocked here as well as in the prompt: a keyword can never route us there.
+  'testosterona', 'ereccion', 'erectil', 'fertilidad', 'esperma', 'libido',
+  'adelgaz', 'quema grasa', 'bajar de peso', 'detox', 'desintox', 'celulitis',
 ];
 
 /** A keyword must contain at least one of these to be ours. */
 const ON_TOPIC = [
-  'sauna', 'hielo', 'fri', 'contraste', 'crioterapia', 'plunge',
-  'temazcal', 'vapor', 'recuperacion', 'inmersion', 'termoterapia',
+  'sauna', 'hielo', 'fri', 'calor', 'contraste', 'crioterapia', 'plunge',
+  'temazcal', 'vapor', 'recuperacion', 'inmersion', 'termoterapia', 'sudor',
+  'entrenar', 'muscular', 'sueno', 'dormir', 'descanso',
 ];
 const SERP_DEPTH = 10;
 const INTERNAL_LINK_POOL = 5;
 const TARGET_WORDS = 1500;
+
+/**
+ * The only citations the robot may use. Hand-checked public-health agencies,
+ * systematic reviews and academic medical centres, per the source hierarchy in
+ * docs/seo-strategy.md.
+ *
+ * This is an allowlist, not a suggestion: any URL the model returns that is not
+ * on this list is dropped before render. That makes a fabricated citation
+ * structurally impossible rather than merely forbidden — the failure mode a
+ * prompt instruction alone cannot close.
+ */
+const SOURCES: { url: string; label: string }[] = [
+  {
+    url: 'https://www.health.harvard.edu/healthy-aging-and-longevity/saunas-and-your-health',
+    label: 'Harvard Health — Saunas and your health (seguridad, hidratación, contraindicaciones)',
+  },
+  {
+    url: 'https://pubmed.ncbi.nlm.nih.gov/30077204/',
+    label: 'PubMed — Revisión de la evidencia sobre sauna y salud',
+  },
+  {
+    url: 'https://pubmed.ncbi.nlm.nih.gov/30486813/',
+    label: 'PubMed — Asociación entre uso de sauna y mortalidad cardiovascular (observacional)',
+  },
+  {
+    url: 'https://pubmed.ncbi.nlm.nih.gov/41049507/',
+    label: 'PubMed — Metaanálisis sobre calor pasivo',
+  },
+  {
+    url: 'https://pubmed.ncbi.nlm.nih.gov/38211547/',
+    label: 'PubMed — Respuesta de choque por frío (riesgos de la inmersión súbita)',
+  },
+  {
+    url: 'https://www.ncbi.nlm.nih.gov/books/NBK620915/',
+    label: 'CDC Yellow Book — Inmersión en agua fría',
+  },
+  {
+    url: 'https://www.cdc.gov/healthy-weight-growth/physical-activity/index.html',
+    label: 'CDC — Actividad física, peso y salud',
+  },
+  {
+    url: 'https://www.who.int/es/news-room/fact-sheets/detail/physical-activity',
+    label: 'OMS — Actividad física (en español)',
+  },
+];
+
+/**
+ * Claims that must never be published as fact. Checked against the finished
+ * draft, not just forbidden in the prompt, because a prompt is advice and this
+ * is a gate: Mexican health advertising is regulated by COFEPRIS, and the site
+ * is an educational publisher, not a clinic.
+ *
+ * A negation immediately before the phrase is allowed — "la sauna no quema
+ * grasa" is exactly the myth-correction the strategy asks for. Anything else
+ * fails the run. A missing day costs nothing; a published medical claim does.
+ */
+const PROHIBITED_CLAIMS = [
+  'cura el insomnio', 'cura la depresion', 'cura la ansiedad',
+  'previene el cancer', 'previene la demencia', 'previene el alzheimer',
+  'trata la disfuncion', 'aumenta la testosterona', 'sube la testosterona',
+  'alarga la vida', 'extiende la vida', 'revierte el envejecimiento',
+  'elimina toxinas', 'desintoxica el cuerpo', 'quema grasa', 'quema calorias',
+  'grado medico', 'clinicamente comprobado', 'cientificamente comprobado',
+  'resultados garantizados',
+];
+
+/** Words that flip a prohibited phrase into a correction of it. */
+const NEGATIONS = ['no ', 'nunca ', 'tampoco ', 'ni ', 'mito', 'falso', 'sin evidencia', 'no es cierto'];
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -84,8 +198,30 @@ function optional(name: string): string | null {
 }
 
 /** Deterministic seed rotation: same day → same seed, so a retry doesn't drift. */
-function seedForDay(now: Date): string {
-  return SEED_KEYWORDS[Math.floor(now.getTime() / 86_400_000) % SEED_KEYWORDS.length]!;
+function seedForDay(now: Date): { seed: string; cluster: string } {
+  return SEEDS[Math.floor(now.getTime() / 86_400_000) % SEEDS.length]!;
+}
+
+/**
+ * Returns the prohibited claims the draft asserts, ignoring ones it is debunking.
+ *
+ * The lookback is 40 characters *within the same sentence* — enough to catch "no
+ * quema grasa" and "es un mito que la sauna quema grasa", but stopping at the
+ * previous full stop so a denial in one sentence cannot excuse an assertion in
+ * the next one.
+ */
+export function prohibitedClaimsIn(text: string): string[] {
+  const folded = fold(text);
+  return PROHIBITED_CLAIMS.filter((claim) => {
+    let from = 0;
+    for (;;) {
+      const at = folded.indexOf(claim, from);
+      if (at === -1) return false; // every occurrence was a correction
+      const lead = folded.slice(Math.max(0, at - 40), at).split(/[.!?\n]/).pop() ?? '';
+      if (!NEGATIONS.some((negation) => lead.includes(negation))) return true;
+      from = at + claim.length;
+    }
+  });
 }
 
 /** Lowercase, accent-free, for substring matching. "frío" and "frio" must agree. */
@@ -139,13 +275,13 @@ async function dataForSeo<T>(path: string, body: unknown): Promise<T | null> {
 }
 
 /** Shares a word with a seed but not its intent — see OFF_TOPIC. */
-function isRelevant(keyword: string): boolean {
+export function isRelevant(keyword: string): boolean {
   const folded = fold(keyword);
   if (OFF_TOPIC.some((term) => folded.includes(term))) return false;
   return ON_TOPIC.some((term) => folded.includes(term));
 }
 
-async function findKeyword(seed: string): Promise<Keyword> {
+async function findKeyword(seed: string, covered: string[]): Promise<Keyword> {
   // keyword_suggestions matches the whole phrase; keyword_ideas matches any single
   // word in it, which in Spanish drags in bathroom-remodelling and swimwear.
   const payload = await dataForSeo<{ tasks?: { result?: { items?: unknown[] }[] }[] }>(
@@ -176,6 +312,10 @@ async function findKeyword(seed: string): Promise<Keyword> {
     // Null difficulty means "not enough data to score", which for a term this
     // obscure reads as low competition. Treat it as winnable rather than drop it.
     .filter((item) => (item.keyword_properties?.keyword_difficulty ?? 0) < MAX_KEYWORD_DIFFICULTY)
+    // One URL per intent. A keyword already answered by a published article
+    // would produce a near-duplicate that competes with its own predecessor —
+    // the single most common way a programmatic blog poisons itself.
+    .filter((item) => !covered.some((title) => title.includes(fold(item.keyword!))))
     .sort((a, b) => (b.keyword_info?.search_volume ?? 0) - (a.keyword_info?.search_volume ?? 0))[0];
 
   if (!best?.keyword) {
@@ -280,13 +420,17 @@ export async function mineMetrics(results: SerpResult[]): Promise<string[]> {
 
 type PriorPost = { title: string; url: string };
 
-async function recentPosts(): Promise<PriorPost[]> {
+/**
+ * Everything already published, newest first. Two jobs: the newest few become
+ * internal-link targets, and the whole set is what the keyword hunt checks
+ * against so we never write the same article twice.
+ */
+async function publishedPosts(): Promise<PriorPost[]> {
   const rows = await getBlogDb()
     .select({ slug: posts.slug, title: posts.title })
     .from(posts)
     .where(and(isNotNull(posts.publishedAt), lte(posts.publishedAt, sql`now()`)))
-    .orderBy(desc(posts.publishedAt))
-    .limit(INTERNAL_LINK_POOL);
+    .orderBy(desc(posts.publishedAt));
 
   return rows.map((row) => ({ title: row.title, url: `${SITE_ORIGIN}/blog/${row.slug}` }));
 }
@@ -312,7 +456,31 @@ const ARTICLE_SCHEMA = {
     },
     contentMarkdown: {
       type: 'string',
-      description: `El artículo completo en Markdown, en español de México. Alrededor de ${TARGET_WORDS} palabras. Empieza en un H2 — sin H1, la página muestra el título por separado.`,
+      description: `El cuerpo del artículo en Markdown, en español de México. Alrededor de ${TARGET_WORDS} palabras. Empieza en un H2 — sin H1, la página muestra el título por separado. No incluyas resumen, preguntas frecuentes ni fuentes: esas secciones se añaden aparte.`,
+    },
+    answerShort: {
+      type: 'string',
+      description:
+        'Respuesta directa a la pregunta principal, de 40 a 80 palabras, en español. Debe poder leerse sola, fuera de contexto.',
+    },
+    whatWeKnow: {
+      type: 'string',
+      description: 'Una o dos frases sobre lo que la evidencia disponible sí respalda.',
+    },
+    whatIsUnclear: {
+      type: 'string',
+      description: 'Una o dos frases sobre lo que sigue siendo incierto, preliminar o mal estudiado.',
+    },
+    safety: {
+      type: 'string',
+      description:
+        'Dos o tres frases de seguridad concretas para este tema: hidratación, enfriamiento gradual, alcohol, y quién debe consultar a su médico antes.',
+    },
+    sourceUrls: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Las URLs de la lista de fuentes permitidas en las que realmente te apoyaste, entre 2 y 4. Copia la URL exacta. No incluyas ninguna otra.',
     },
     keyTakeaways: {
       type: 'array',
@@ -331,7 +499,18 @@ const ARTICLE_SCHEMA = {
         'De 3 a 5 preguntas que un lector mexicano realmente buscaría, en español, con respuestas de 40 a 60 palabras.',
     },
   },
-  required: ['title', 'seoMetaDescription', 'contentMarkdown', 'keyTakeaways', 'faq'],
+  required: [
+    'title',
+    'seoMetaDescription',
+    'contentMarkdown',
+    'answerShort',
+    'whatWeKnow',
+    'whatIsUnclear',
+    'safety',
+    'sourceUrls',
+    'keyTakeaways',
+    'faq',
+  ],
   additionalProperties: false,
 } as const;
 
@@ -339,6 +518,11 @@ export type Article = {
   title: string;
   seoMetaDescription: string;
   contentMarkdown: string;
+  answerShort: string;
+  whatWeKnow: string;
+  whatIsUnclear: string;
+  safety: string;
+  sourceUrls: string[];
   keyTakeaways: string[];
   faq: { question: string; answer: string }[];
 };
@@ -356,6 +540,19 @@ Estilo:
 - Frases directas y llanas. Sin promesas exageradas, sin "descubre el poder de", sin emojis.
 - No eres médico. Menciona las contraindicaciones reales (padecimientos cardiovasculares, embarazo, medicamentos para la presión) una sola vez, con claridad, sin llenar el texto de advertencias.
 - Nunca inventes un estudio, un investigador ni una cita. Si no tienes fuente, describe el mecanismo sin atribuirlo.
+
+Evidencia — separa siempre lo comprobado de lo plausible:
+- Usa "la evidencia disponible sugiere", "se ha observado una asociación", "los resultados son preliminares", "la respuesta puede variar".
+- Una asociación observacional no es una causa. Dilo cuando corresponda.
+- Distingue entre pausa de enfriamiento, ducha fría e inmersión completa en agua fría. No son la misma práctica.
+
+Afirmaciones prohibidas. No escribas, ni siquiera de forma matizada, que la sauna o el frío:
+desintoxican o eliminan toxinas; queman grasa o calorías de forma relevante; curan el insomnio, la ansiedad
+o la depresión; previenen el cáncer, la demencia o la enfermedad cardiovascular; alargan la vida o revierten
+el envejecimiento; tratan la disfunción eréctil, la infertilidad o la testosterona baja; o "fortalecen el
+sistema inmune". Tampoco uses "grado médico", "clínicamente comprobado" ni "resultados garantizados".
+Si el tema del artículo es precisamente uno de estos mitos, tu trabajo es corregirlo: dilo en negativo,
+con la evidencia, y explica qué ocurre en realidad (por ejemplo, que el peso perdido en una sauna es agua).
 
 Estructura: secciones H2, párrafos cortos, una tabla comparativa cuando aporte, y un protocolo en viñetas que el lector pueda seguir hoy mismo.`;
 
@@ -389,6 +586,10 @@ ${input.metrics.length ? input.metrics.map((m) => `- ${m}`).join('\n') : '(ningu
 Enlaza a 2 o 3 de estos artículos ya publicados, dentro del texto, con anclas naturales donde el tema realmente conecte. Usa las URLs exactas. No inventes otros enlaces internos.
 ${linkBlock}
 
+## Fuentes permitidas — la lista completa
+Solo puedes citar de aquí. Devuelve en \`sourceUrls\` las 2 a 4 en las que realmente te apoyaste, con la URL exacta. Cualquier otra URL se descarta antes de publicar.
+${SOURCES.map((source) => `- ${source.label}\n  ${source.url}`).join('\n')}
+
 Supera a lo que ya posiciona siendo más específico, no más largo.`;
 
   // Streaming: Opus 5 thinks by default and max_tokens caps thinking + text
@@ -413,7 +614,60 @@ Supera a lo que ya posiciona siendo más específico, no más largo.`;
   const text = message.content.find((block) => block.type === 'text');
   if (!text || text.type !== 'text') throw new Error('No text block in the model response.');
 
-  return JSON.parse(text.text) as Article;
+  const article = JSON.parse(text.text) as Article;
+
+  // Drop anything not on the allowlist. The model is told the rule; this is what
+  // enforces it.
+  const allowed = new Set(SOURCES.map((source) => source.url));
+  const dropped = article.sourceUrls.filter((url) => !allowed.has(url));
+  if (dropped.length) console.warn(`Dropped ${dropped.length} source(s) not on the allowlist: ${dropped.join(', ')}`);
+  article.sourceUrls = article.sourceUrls.filter((url) => allowed.has(url));
+
+  return article;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5b. Assemble the published page                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Turns the model's fields into the markdown that actually ships.
+ *
+ * Assembled in code rather than asked for as prose so the shape is identical on
+ * every post: answer first, then the body, then the questions, then the sources.
+ * It also puts the FAQ on the page — the FAQPage schema below describes these
+ * questions, and structured data that describes invisible content is exactly
+ * what Google's guidance tells you not to do.
+ */
+export function assembleMarkdown(article: Article): string {
+  const sources = SOURCES.filter((source) => article.sourceUrls.includes(source.url));
+
+  return [
+    `**Respuesta corta.** ${article.answerShort}`,
+    '',
+    '## Resumen rápido',
+    '',
+    ...article.keyTakeaways.map((takeaway) => `- ${takeaway}`),
+    '',
+    `**Lo que sí sabemos.** ${article.whatWeKnow}`,
+    '',
+    `**Lo que todavía no está claro.** ${article.whatIsUnclear}`,
+    '',
+    `**Seguridad.** ${article.safety}`,
+    '',
+    article.contentMarkdown.trim(),
+    '',
+    '## Preguntas frecuentes',
+    '',
+    ...article.faq.flatMap((entry) => [`### ${entry.question}`, '', entry.answer, '']),
+    ...(sources.length
+      ? ['## Fuentes', '', ...sources.map((source) => `- [${source.label}](${source.url})`), '']
+      : []),
+    '---',
+    '',
+    'Este artículo es información general y no sustituye una evaluación médica. Si tienes un padecimiento cardiovascular, estás embarazada o tomas medicamentos para la presión, consulta a tu médico antes de usar sauna o inmersión en frío.',
+    '',
+  ].join('\n');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -425,7 +679,13 @@ Supera a lo que ya posiciona siendo más específico, no más largo.`;
  * keeps the three as separate addressable nodes rather than nesting them, which
  * is what Google's rich-results parser prefers.
  */
-export function buildJsonLd(input: { article: Article; slug: string; keyword: string; publishedAt: Date }) {
+export function buildJsonLd(input: {
+  article: Article;
+  slug: string;
+  keyword: string;
+  cluster: string;
+  publishedAt: Date;
+}) {
   const url = `${SITE_ORIGIN}/blog/${input.slug}`;
   const iso = input.publishedAt.toISOString();
 
@@ -453,16 +713,29 @@ export function buildJsonLd(input: { article: Article; slug: string; keyword: st
         '@id': `${url}#article`,
         headline: input.article.title,
         description: input.article.seoMetaDescription,
-        articleSection: 'Terapia de contraste',
+        articleSection: input.cluster,
         keywords: input.keyword,
         inLanguage: LOCALE,
         datePublished: iso,
         dateModified: iso,
         mainEntityOfPage: { '@id': `${url}#webpage` },
+        // Organization, never a Person. Inventing a bylined author with
+        // credentials would be the fake-expertise signal the strategy forbids.
         author: { '@type': 'Organization', name: SITE_NAME, url: SITE_ORIGIN },
         publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_ORIGIN },
-        // Takeaways give AI search engines a citable, extractable summary.
-        abstract: input.article.keyTakeaways.join(' '),
+        // The short answer is what an answer engine can lift verbatim.
+        abstract: input.article.answerShort,
+        // Every one of these is rendered as a visible link in "Fuentes".
+        citation: input.article.sourceUrls.map((source) => ({ '@type': 'WebPage', url: source })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumbs`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_ORIGIN },
+          { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
+          { '@type': 'ListItem', position: 3, name: input.article.title, item: url },
+        ],
       },
       {
         '@type': 'FAQPage',
@@ -514,63 +787,86 @@ export type PublishResult = {
   slug: string;
   title: string;
   keyword: string;
+  cluster: string;
   wordCount: number;
   internalLinks: number;
   metricsFound: number;
   serpResults: number;
+  sourcesCited: number;
   embedded: boolean;
   written: boolean;
   article?: Article;
+  markdown?: string;
   jsonLd?: unknown;
 };
 
 export async function publishDailyPost(options: { dryRun?: boolean; now?: Date } = {}): Promise<PublishResult> {
   const now = options.now ?? new Date();
-  const seed = seedForDay(now);
-  console.log(`Seed: "${seed}"`);
+  const { seed, cluster } = seedForDay(now);
+  console.log(`Seed: "${seed}" · cluster: ${cluster}`);
 
-  const keyword = await findKeyword(seed);
+  const priorPosts = await publishedPosts();
+  const keyword = await findKeyword(
+    seed,
+    priorPosts.map((post) => fold(post.title)),
+  );
   console.log(`Target: "${keyword.keyword}" (vol ${keyword.volume}, KD ${keyword.difficulty})`);
 
-  // Independent calls — no reason to serialize them.
-  const [serp, priorPosts] = await Promise.all([fetchSerp(keyword.keyword), recentPosts()]);
+  const serp = await fetchSerp(keyword.keyword);
   const metrics = await mineMetrics(serp);
-  console.log(`SERP: ${serp.length} · metrics: ${metrics.length} · link pool: ${priorPosts.length}`);
+  const linkPool = priorPosts.slice(0, INTERNAL_LINK_POOL);
+  console.log(`SERP: ${serp.length} · metrics: ${metrics.length} · link pool: ${linkPool.length}`);
 
-  const article = await writeArticle({ keyword, serp, metrics, priorPosts });
+  const article = await writeArticle({ keyword, serp, metrics, priorPosts: linkPool });
+  const markdown = assembleMarkdown(article);
+
+  // Gate, not a warning. A prohibited health claim is the one failure worth
+  // losing a day over, so this throws before anything reaches the database.
+  const violations = prohibitedClaimsIn(`${article.title} ${markdown}`);
+  if (violations.length) {
+    throw new Error(`Draft asserts prohibited health claim(s): ${violations.join(', ')}. Nothing was published.`);
+  }
+
   const slug = slugify(article.title);
-  const jsonLd = buildJsonLd({ article, slug, keyword: keyword.keyword, publishedAt: now });
+  const jsonLd = buildJsonLd({ article, slug, keyword: keyword.keyword, cluster, publishedAt: now });
 
-  const internalLinks = priorPosts.filter((post) => article.contentMarkdown.includes(post.url)).length;
-  const wordCount = article.contentMarkdown.split(/\s+/).length;
-  console.log(`Draft: "${article.title}" · ${wordCount} palabras · ${internalLinks} enlaces · /blog/${slug}`);
+  const internalLinks = linkPool.filter((post) => markdown.includes(post.url)).length;
+  const wordCount = markdown.split(/\s+/).length;
+  console.log(
+    `Draft: "${article.title}" · ${wordCount} palabras · ${internalLinks} enlaces · ${article.sourceUrls.length} fuentes · /blog/${slug}`,
+  );
 
-  if (priorPosts.length >= 2 && internalLinks < 2) {
+  if (linkPool.length >= 2 && internalLinks < 2) {
     console.warn(`Only ${internalLinks} internal link(s) — the model ignored part of the brief.`);
+  }
+  if (article.sourceUrls.length < 2) {
+    console.warn(`Only ${article.sourceUrls.length} allowed source(s) cited — the evidence section will read thin.`);
   }
 
   const base = {
     slug,
     title: article.title,
     keyword: keyword.keyword,
+    cluster,
     wordCount,
     internalLinks,
     metricsFound: metrics.length,
     serpResults: serp.length,
+    sourcesCited: article.sourceUrls.length,
   };
 
   if (options.dryRun) {
-    return { ...base, embedded: false, written: false, article, jsonLd };
+    return { ...base, embedded: false, written: false, article, markdown, jsonLd };
   }
 
-  const vectorEmbedding = await embed(`${article.title}\n\n${article.contentMarkdown}`);
+  const vectorEmbedding = await embed(`${article.title}\n\n${markdown}`);
 
   await getBlogDb()
     .insert(posts)
     .values({
       slug,
       title: article.title,
-      contentMarkdown: article.contentMarkdown,
+      contentMarkdown: markdown,
       seoMetaDescription: article.seoMetaDescription,
       jsonLdSchema: jsonLd,
       publishedAt: now,
@@ -581,7 +877,7 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
       target: posts.slug,
       set: {
         title: article.title,
-        contentMarkdown: article.contentMarkdown,
+        contentMarkdown: markdown,
         seoMetaDescription: article.seoMetaDescription,
         jsonLdSchema: jsonLd,
         vectorEmbedding,

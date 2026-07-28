@@ -15,8 +15,8 @@ const dryRun = process.argv.includes('--dry');
 
 const result = await publishDailyPost({ dryRun });
 
-if (dryRun && result.article) {
-  console.log(`\n--- MARKDOWN ---\n${result.article.contentMarkdown}`);
+if (dryRun && result.markdown) {
+  console.log(`\n--- MARKDOWN ---\n${result.markdown}`);
   console.log(`\n--- JSON-LD ---\n${JSON.stringify(result.jsonLd, null, 2)}`);
   console.log('\nDry run: nothing written to the database.');
 }
