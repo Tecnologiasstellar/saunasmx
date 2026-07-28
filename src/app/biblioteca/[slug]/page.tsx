@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { loadLibraryResource } from '@/modules/library/page-data';
+import { libraryIndexable, loadLibraryResource } from '@/modules/library/page-data';
 import { FORMAT_LABEL, OfficialSourcePanel } from '@/modules/ui/library';
 import { Card, Chip, Container, Eyebrow } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
@@ -10,10 +10,14 @@ type Params = Promise<{ slug: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const data = await loadLibraryResource((await params).slug);
   if (!data) return { title: 'Recurso', robots: { index: false, follow: false } };
+  // Same rule the index and the blog already follow: a preview host must never
+  // put a curated resource page into the index.
+  const indexable = libraryIndexable(data.config);
   return {
     title: data.resource.title,
     description: data.resource.annotation ?? `Recurso oficial de ${data.resource.creatorName}, seleccionado por Saunas.mx.`,
     alternates: { canonical: `/biblioteca/${data.resource.slug}` },
+    robots: { index: indexable, follow: indexable },
   };
 }
 
