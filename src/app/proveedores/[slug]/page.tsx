@@ -55,7 +55,12 @@ export default async function ProviderProfile({ params }: { params: Params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
-      <DirectoryProfilePage profile={data.profile} related={data.related} indexLabel="Proveedores" />
+      <DirectoryProfilePage
+        profile={data.profile}
+        related={data.related}
+        indexLabel="Proveedores"
+        contactEmail={data.config.contact.email}
+      />
       <SiteFooter config={data.config} />
     </>
   );

@@ -60,6 +60,12 @@ export type MatchingConfig = {
 /** A public header/footer destination this marketplace actually publishes. */
 export type NavLink = { label: string; href: string };
 
+/** Bare handles, not URLs. `null` means the account does not exist yet. */
+export type SocialHandles = { instagram: string | null; tiktok: string | null };
+
+/** Where the public writes to us, and where they can find us. */
+export type Contact = { email: string; social: SocialHandles };
+
 export type MarketplaceConfig = {
   id: string;
   slug: string;
@@ -71,6 +77,7 @@ export type MarketplaceConfig = {
   localization: { locale: string; currency: string; country: string };
   themeKey: string;
   nav: NavLink[];
+  contact: Contact;
   features: Record<string, boolean>;
   seo: { defaultIndexing: boolean; pageEligibility: string; primaryCta: string };
   questionnaire: Questionnaire;

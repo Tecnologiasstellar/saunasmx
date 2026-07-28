@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { MarketplaceConfig } from '../marketplace-config/types';
+import type { MarketplaceConfig, SocialHandles } from '../marketplace-config/types';
 import { ButtonLink, Container } from './primitives';
 
 /**
@@ -84,43 +84,154 @@ export function SiteHeader({ config }: { config: MarketplaceConfig }) {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Footer                                                                     */
+/* -------------------------------------------------------------------------- */
+
+const SOCIAL_ICONS: Record<keyof SocialHandles, { label: string; url: (handle: string) => string; path: string }> = {
+  instagram: {
+    label: 'Instagram',
+    url: (handle) => `https://instagram.com/${handle}`,
+    path: 'M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16Zm0 5.68a4.16 4.16 0 1 0 0 8.32 4.16 4.16 0 0 0 0-8.32Zm0 6.86a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Zm5.3-7.02a.97.97 0 1 1-1.94 0 .97.97 0 0 1 1.94 0Z',
+  },
+  tiktok: {
+    label: 'TikTok',
+    url: (handle) => `https://tiktok.com/@${handle}`,
+    path: 'M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.79-2.46V9.8a5.77 5.77 0 1 0 4.88 5.7V9.01a7.35 7.35 0 0 0 4.3 1.38v-3.1a4.29 4.29 0 0 1-3.24-1.47Z',
+  },
+};
+
+/**
+ * Social presence.
+ *
+ * A network without a handle still renders — the brand shows where it intends
+ * to be — but as plain text, not an anchor. Shipping `href="#"` or a guessed
+ * profile URL would be a link to nowhere, and the public-site suite fails the
+ * build over exactly that.
+ */
+function SocialLinks({ social }: { social: SocialHandles }) {
+  const entries = Object.entries(SOCIAL_ICONS) as Array<[keyof SocialHandles, (typeof SOCIAL_ICONS)[keyof SocialHandles]]>;
+
+  return (
+    <ul className="flex list-none items-center gap-3 p-0">
+      {entries.map(([network, icon]) => {
+        const handle = social[network];
+        const glyph = (
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-[18px] w-[18px]">
+            {/* evenodd, or the lens and the body of the Instagram mark fill solid. */}
+            <path d={icon.path} fillRule="evenodd" clipRule="evenodd" />
+          </svg>
+        );
+        const shell =
+          'flex h-10 w-10 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--brand-ink)_16%,transparent)]';
+
+        return (
+          <li key={network}>
+            {handle ? (
+              <a
+                href={icon.url(handle)}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={icon.label}
+                className={`${shell} text-[var(--brand-ink)] transition-colors hover:border-[var(--glow)] hover:text-[var(--glow)]`}
+              >
+                {glyph}
+              </a>
+            ) : (
+              <span
+                aria-label={`${icon.label} — próximamente`}
+                title="Próximamente"
+                className={`${shell} text-[color-mix(in_srgb,var(--brand-ink)_28%,transparent)]`}
+              >
+                {glyph}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="font-mono text-[0.6875rem] font-bold uppercase tracking-[0.15em] text-[color-mix(in_srgb,var(--brand-ink)_45%,transparent)]">
+        {title}
+      </h2>
+      <ul className="mt-4 flex list-none flex-col gap-3 p-0 text-sm">{children}</ul>
+    </div>
+  );
+}
+
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <li>
+      <Link href={href} className="transition-colors hover:text-[var(--glow)]">
+        {children}
+      </Link>
+    </li>
+  );
+}
+
 export function SiteFooter({ config }: { config: MarketplaceConfig }) {
+  const { email, social } = config.contact;
+  const year = new Date().getFullYear();
+
   return (
     <footer className="mt-24 bg-[var(--surface-dark)] text-[color-mix(in_srgb,var(--brand-ink)_60%,transparent)]">
-      <Container className="py-12">
-        <div className="flex flex-col gap-8 border-b border-[color-mix(in_srgb,var(--brand-ink)_12%,transparent)] pb-8 md:flex-row md:items-center md:justify-between">
-          <Link href="/" className="font-[family-name:var(--font-heading)] text-xl text-[var(--brand-ink)]">
-            {config.name}
-          </Link>
-          <nav aria-label="Pie de página" className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-            {config.nav.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-[var(--glow)]">
-                {link.label}
-              </Link>
-            ))}
-            <Link href="/cotizar" className="transition-colors hover:text-[var(--glow)]">
-              Cotizar
+      <Container className="py-14 lg:py-16">
+        <div className="grid gap-12 border-b border-[color-mix(in_srgb,var(--brand-ink)_12%,transparent)] pb-12 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="max-w-sm">
+            <Link href="/" className="font-[family-name:var(--font-heading)] text-xl text-[var(--brand-ink)]">
+              {config.name}
             </Link>
-            <Link href="/aviso-de-privacidad" className="transition-colors hover:text-[var(--glow)]">
-              Aviso de Privacidad
-            </Link>
-            <a href="mailto:albertovillalpando@gmail.com" className="transition-colors hover:text-[var(--glow)]">
-              Contacto
-            </a>
-          </nav>
+            <p className="mt-4 text-sm leading-relaxed">
+              Conectamos proyectos con proveedores que trabajan en tu zona. Gratis para ti.
+            </p>
+            <div className="mt-6">
+              <SocialLinks social={social} />
+            </div>
+          </div>
+
+          {/* Only what this marketplace publishes: an empty nav renders no column. */}
+          {config.nav.length > 0 ? (
+            <FooterColumn title="Explora">
+              {config.nav.map((link) => (
+                <FooterLink key={link.href} href={link.href}>
+                  {link.label}
+                </FooterLink>
+              ))}
+            </FooterColumn>
+          ) : null}
+
+          <FooterColumn title="Empieza">
+            <FooterLink href="/cotizar">Cotizar mi proyecto</FooterLink>
+            <FooterLink href="/contacto">Contacto</FooterLink>
+            <FooterLink href="/entrar">Acceso proveedores</FooterLink>
+          </FooterColumn>
+
+          <FooterColumn title="Legal">
+            <FooterLink href="/aviso-de-privacidad">Aviso de Privacidad</FooterLink>
+            <li>
+              <a href={`mailto:${email}`} className="transition-colors hover:text-[var(--glow)]">
+                {email}
+              </a>
+            </li>
+          </FooterColumn>
         </div>
 
-        <div className="mt-8 grid gap-3 text-sm leading-relaxed md:max-w-3xl">
-          <p>
-            {config.name} conecta proyectos con proveedores. Compartimos tus datos únicamente con los proveedores
-            asignados a tu proyecto y solo con tu consentimiento.
-          </p>
-          <p>
-            ¿Quieres corregir o eliminar tus datos? Escríbenos a{' '}
-            <a className="underline hover:text-[var(--glow)]" href="mailto:albertovillalpando@gmail.com">
-              albertovillalpando@gmail.com
-            </a>
+        <div className="mt-8 flex flex-col gap-4 text-sm leading-relaxed md:flex-row md:items-end md:justify-between">
+          <p className="max-w-2xl">
+            Compartimos tus datos únicamente con los proveedores asignados a tu proyecto y solo con tu consentimiento.
+            ¿Quieres corregirlos o eliminarlos?{' '}
+            <Link className="underline hover:text-[var(--glow)]" href="/contacto">
+              Escríbenos
+            </Link>
             .
+          </p>
+          <p className="whitespace-nowrap text-[color-mix(in_srgb,var(--brand-ink)_40%,transparent)]">
+            © {year} {config.name}
           </p>
         </div>
       </Container>

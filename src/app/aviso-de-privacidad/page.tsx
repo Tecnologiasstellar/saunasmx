@@ -29,8 +29,8 @@ export default async function PrivacyNoticePage() {
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
             {config.name} es operado por Alberto Villalpando. Aún no contamos con un domicilio físico registrado para
             atención al público; el contacto es exclusivamente por correo electrónico a{' '}
-            <a className="underline" href="mailto:albertovillalpando@gmail.com">
-              albertovillalpando@gmail.com
+            <a className="underline" href={`mailto:${config.contact.email}`}>
+              {config.contact.email}
             </a>
             .
           </p>
@@ -61,8 +61,8 @@ export default async function PrivacyNoticePage() {
           <p className="mt-2 max-w-2xl text-[var(--ink-muted)]">
             Puedes solicitar en cualquier momento el Acceso, Rectificación, Cancelación u Oposición (derechos ARCO) al
             uso de tus datos, así como revocar tu consentimiento o limitar su uso, escribiendo a{' '}
-            <a className="underline" href="mailto:albertovillalpando@gmail.com">
-              albertovillalpando@gmail.com
+            <a className="underline" href={`mailto:${config.contact.email}`}>
+              {config.contact.email}
             </a>
             . Responderemos en un plazo razonable y, salvo que existan registros que debamos conservar por ley,
             eliminaremos o anonimizaremos tus datos.
