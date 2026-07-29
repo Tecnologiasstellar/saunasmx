@@ -219,6 +219,22 @@ export function SiteFooter({ config }: { config: MarketplaceConfig }) {
               </a>
             </li>
           </FooterColumn>
+
+          <FooterColumn title="Asociados">
+            <li>
+              <a
+                href="https://simple.mx/product/premium-memory-foam-mattress"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-[var(--glow)]"
+              >
+                SIMPLE — Colchones
+              </a>
+            </li>
+            <li className="text-xs text-[color-mix(in_srgb,var(--brand-ink)_45%,transparent)]">
+              Recomendaciones verificadas de marcas asociadas para recuperación.
+            </li>
+          </FooterColumn>
         </div>
 
         <div className="mt-8 flex flex-col gap-4 text-sm leading-relaxed md:flex-row md:items-end md:justify-between">
