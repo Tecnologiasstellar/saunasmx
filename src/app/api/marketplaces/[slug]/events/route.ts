@@ -22,13 +22,24 @@ export const runtime = 'nodejs';
 
 const EVENTS_PER_HOUR = 120;
 
-const FUNNEL_EVENT_NAMES = ['questionnaire_started', 'questionnaire_step_viewed', 'questionnaire_step_completed', 'questionnaire_abandoned'] as const;
+const FUNNEL_EVENT_NAMES = [
+  'questionnaire_started',
+  'questionnaire_step_viewed',
+  'questionnaire_step_completed',
+  'questionnaire_abandoned',
+  'configurator_started',
+  'configurator_step_completed',
+  'configurator_abandoned',
+  'configurator_completed',
+  'configurator_to_cotizar_handoff',
+] as const;
 
 const bodySchema = z
   .object({
     name: z.enum(FUNNEL_EVENT_NAMES),
     stepId: z.string().max(80).optional(),
     questionnaireVersion: z.number().int().positive().optional(),
+    configuratorVersion: z.number().int().positive().optional(),
     utm_source: z.string().max(120).optional(),
     utm_medium: z.string().max(120).optional(),
     utm_campaign: z.string().max(120).optional(),
@@ -73,7 +84,12 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       marketplaceId,
       properties: {
         marketplaceSlug: config.slug,
-        questionnaireVersion: parsed.data.questionnaireVersion ?? config.questionnaire.version,
+        questionnaireVersion: parsed.data.name.startsWith('questionnaire_')
+          ? (parsed.data.questionnaireVersion ?? config.questionnaire.version)
+          : undefined,
+        configuratorVersion: parsed.data.name.startsWith('configurator_')
+          ? (parsed.data.configuratorVersion ?? config.configurator?.version)
+          : undefined,
         stepId: parsed.data.stepId,
         utm_source: parsed.data.utm_source,
         utm_medium: parsed.data.utm_medium,

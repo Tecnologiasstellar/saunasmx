@@ -162,7 +162,30 @@ export const ARTICLE_PHOTOS: Photo[] = [
   },
 ];
 
-export const ALL_PHOTOS: Photo[] = [HERO_PHOTO, ...ARTICLE_PHOTOS];
+/**
+ * Option-card imagery for /disena-tu-sauna (see src/modules/configurator).
+ * `mode` is inert here — these never pass through `poolFor`/`articlePhoto`,
+ * it exists only because the shared `Photo` type requires it.
+ */
+export const CONFIGURATOR_PHOTOS: Photo[] = [
+  { id: 7598363, alt: 'Interior de una sauna pequeña con acabados en madera', photographer: 'Max Vakhtbovych', source: 'https://www.pexels.com/photo/view-of-a-brown-room-7598363/', width: 1200, mode: 'heat' },
+  { id: 32504779, alt: 'Interior de una sauna mediana con una estufa de piedras al centro', photographer: 'HUUM sauna heaters', source: 'https://www.pexels.com/photo/modern-wooden-sauna-interior-with-heater-32504779/', width: 1200, mode: 'heat' },
+  { id: 23330922, alt: 'Vista superior de una sauna grande con varias filas de bancas de madera', photographer: 'Batuhan Kocabaş', source: 'https://www.pexels.com/photo/high-angle-view-of-a-sauna-23330922/', width: 1200, mode: 'heat' },
+  { id: 19447148, alt: 'Textura cercana de madera de cedro rojo', photographer: 'Karlee Heck', source: 'https://www.pexels.com/photo/wooden-nailed-red-siding-19447148/', width: 1200, mode: 'heat' },
+  { id: 29618523, alt: 'Textura cercana de duela de madera clara tipo pino', photographer: 'Qing Luo', source: 'https://www.pexels.com/photo/close-up-of-wooden-floor-with-shadow-pattern-29618523/', width: 1200, mode: 'heat' },
+  { id: 36091247, alt: 'Textura de tablones de madera blanca envejecida', photographer: 'wal_ 172619', source: 'https://www.pexels.com/photo/white-rustic-wooden-plank-background-36091247/', width: 1200, mode: 'heat' },
+  { id: 10899603, alt: 'Textura cercana de tablones de madera café oscuro', photographer: 'Engin Akyurt', source: 'https://www.pexels.com/photo/brown-wooden-planks-in-close-up-photography-10899603/', width: 1200, mode: 'heat' },
+  { id: 36818217, alt: 'Estufa eléctrica con piedras dentro de una cabina de sauna de madera', photographer: 'HUUM sauna heaters', source: 'https://www.pexels.com/photo/modern-sauna-heater-with-stones-in-wooden-cabin-36818217/', width: 1200, mode: 'heat' },
+  { id: 31092909, alt: 'Estufa de leña con piedras dentro de una sauna de madera', photographer: 'HUUM sauna heaters', source: 'https://www.pexels.com/photo/modern-sauna-with-wood-fired-heater-and-stones-31092909/', width: 1200, mode: 'heat' },
+  { id: 37381280, alt: 'Cabaña rústica de madera de forma rectangular', photographer: 'Margo Evardson', source: 'https://www.pexels.com/photo/rustic-wooden-cabin-in-tartu-county-estonia-37381280/', width: 1200, mode: 'heat' },
+  { id: 15857059, alt: 'Sauna tipo barril de madera sobre una terraza rodeada de árboles', photographer: 'Curtis Adams', source: 'https://www.pexels.com/photo/wooden-sauna-on-terrace-15857059/', width: 1200, mode: 'heat' },
+  { id: 34923434, alt: 'Cabañas de madera tipo A-frame en un bosque nevado', photographer: 'Helena Jankovičová Kováčová', source: 'https://www.pexels.com/photo/a-frame-wooden-cabins-in-snowy-forest-setting-34923434/', width: 1200, mode: 'heat' },
+  { id: 7598370, alt: 'Interior de una sauna con una ventana grande y vista al bosque', photographer: 'Max Vakhtbovych', source: 'https://www.pexels.com/photo/a-sauna-bath-with-a-wooden-interior-7598370/', width: 1200, mode: 'heat' },
+  { id: 37816610, alt: 'Interior de una sauna cerrada sin ventana, con bancas de madera', photographer: 'HUUM sauna heaters', source: 'https://www.pexels.com/photo/elegant-modern-indoor-sauna-with-wooden-benches-37816610/', width: 1200, mode: 'heat' },
+  { id: 29306914, alt: 'Sauna de madera al aire libre junto a una cabaña rodeada de vegetación', photographer: 'Teju', source: 'https://www.pexels.com/photo/cozy-cabin-in-the-woods-with-outdoor-sauna-29306914/', width: 1200, mode: 'heat' },
+];
+
+export const ALL_PHOTOS: Photo[] = [HERO_PHOTO, ...ARTICLE_PHOTOS, ...CONFIGURATOR_PHOTOS];
 
 /** Stable across deploys, so an article keeps its image instead of reshuffling on every build. */
 function hash(slug: string): number {
