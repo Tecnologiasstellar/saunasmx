@@ -132,6 +132,8 @@ export type MarketplaceConfig = {
   matching: MatchingConfig;
   /** Optional lead-grading config; undefined means this marketplace grades no leads. */
   leadScoring?: LeadScoringConfig;
+  /** Optional visual pre-questionnaire; undefined means this marketplace has no configurator. */
+  configurator?: ConfiguratorConfig;
   /** Hash of the three source files; identifies the published config version. */
   configVersion: string;
 };
@@ -159,6 +161,25 @@ export type LeadScoringConfig = {
   dimensions: LeadScoringDimension[];
   contactBonus: number;
   grades: LeadScoringGradeRule[];
+};
+
+/**
+ * Optional visual pre-questionnaire, opted into per marketplace. See
+ * src/modules/configurator/schema.ts for the authored JSON shape this is
+ * derived from.
+ */
+export type ConfiguratorImage = { id: number; photographer: string; sourcePage: string };
+export type ConfiguratorOption = { value: string; label: string; image: ConfiguratorImage };
+export type ConfiguratorField = { id: string; label: string; options: ConfiguratorOption[] };
+export type ConfiguratorStep = { id: string; label: string; fields: ConfiguratorField[] };
+export type ConfiguratorPriceBand = { sizeValue: string; label: string; minMxn: number; maxMxn: number | null };
+export type ConfiguratorConfig = {
+  id: string;
+  version: number;
+  locale: string;
+  steps: ConfiguratorStep[];
+  sizeFieldId: string;
+  priceBands: ConfiguratorPriceBand[];
 };
 
 export class ConfigValidationError extends Error {

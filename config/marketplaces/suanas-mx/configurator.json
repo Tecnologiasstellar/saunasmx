@@ -1,0 +1,159 @@
+{
+  "id": "sauna-visual-configurator-v1",
+  "version": 1,
+  "locale": "es-MX",
+  "sizeFieldId": "size",
+  "steps": [
+    {
+      "id": "size",
+      "label": "¿De qué tamaño quieres tu sauna?",
+      "fields": [
+        {
+          "id": "size",
+          "label": "Tamaño",
+          "options": [
+            {
+              "value": "small",
+              "label": "Pequeña (2-3 personas)",
+              "image": { "id": 7598363, "photographer": "Max Vakhtbovych", "sourcePage": "https://www.pexels.com/photo/view-of-a-brown-room-7598363/" }
+            },
+            {
+              "value": "medium",
+              "label": "Mediana (4-6 personas)",
+              "image": { "id": 32504779, "photographer": "HUUM sauna heaters", "sourcePage": "https://www.pexels.com/photo/modern-wooden-sauna-interior-with-heater-32504779/" }
+            },
+            {
+              "value": "large",
+              "label": "Grande (7+ personas)",
+              "image": { "id": 23330922, "photographer": "Batuhan Kocabaş", "sourcePage": "https://www.pexels.com/photo/high-angle-view-of-a-sauna-23330922/" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wood",
+      "label": "¿Qué tipo de madera te gustaría?",
+      "fields": [
+        {
+          "id": "wood_species",
+          "label": "Madera",
+          "options": [
+            {
+              "value": "cedro",
+              "label": "Cedro rojo",
+              "image": { "id": 19447148, "photographer": "Karlee Heck", "sourcePage": "https://www.pexels.com/photo/wooden-nailed-red-siding-19447148/" }
+            },
+            {
+              "value": "pino",
+              "label": "Pino",
+              "image": { "id": 29618523, "photographer": "Qing Luo", "sourcePage": "https://www.pexels.com/photo/close-up-of-wooden-floor-with-shadow-pattern-29618523/" }
+            },
+            {
+              "value": "abeto",
+              "label": "Abeto",
+              "image": { "id": 36091247, "photographer": "wal_ 172619", "sourcePage": "https://www.pexels.com/photo/white-rustic-wooden-plank-background-36091247/" }
+            },
+            {
+              "value": "termo_tratado",
+              "label": "Madera termo-tratada",
+              "image": { "id": 10899603, "photographer": "Engin Akyurt", "sourcePage": "https://www.pexels.com/photo/brown-wooden-planks-in-close-up-photography-10899603/" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "heater",
+      "label": "¿Estufa eléctrica o de leña?",
+      "fields": [
+        {
+          "id": "heater_type",
+          "label": "Estufa",
+          "options": [
+            {
+              "value": "electric",
+              "label": "Eléctrica",
+              "image": { "id": 36818217, "photographer": "HUUM sauna heaters", "sourcePage": "https://www.pexels.com/photo/modern-sauna-heater-with-stones-in-wooden-cabin-36818217/" }
+            },
+            {
+              "value": "wood",
+              "label": "De leña",
+              "image": { "id": 31092909, "photographer": "HUUM sauna heaters", "sourcePage": "https://www.pexels.com/photo/modern-sauna-with-wood-fired-heater-and-stones-31092909/" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shape",
+      "label": "¿Qué forma te gustaría para tu cabina?",
+      "fields": [
+        {
+          "id": "cabin_shape",
+          "label": "Forma",
+          "options": [
+            {
+              "value": "rectangular",
+              "label": "Cuadrada / rectangular",
+              "image": { "id": 37381280, "photographer": "Margo Evardson", "sourcePage": "https://www.pexels.com/photo/rustic-wooden-cabin-in-tartu-county-estonia-37381280/" }
+            },
+            {
+              "value": "barrel",
+              "label": "Barril",
+              "image": { "id": 15857059, "photographer": "Curtis Adams", "sourcePage": "https://www.pexels.com/photo/wooden-sauna-on-terrace-15857059/" }
+            },
+            {
+              "value": "a_frame",
+              "label": "A-frame (techo triangular)",
+              "image": { "id": 34923434, "photographer": "Helena Jankovičová Kováčová", "sourcePage": "https://www.pexels.com/photo/a-frame-wooden-cabins-in-snowy-forest-setting-34923434/" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "window_and_setting",
+      "label": "Últimos detalles",
+      "fields": [
+        {
+          "id": "window",
+          "label": "¿Con ventana o sin ventana?",
+          "options": [
+            {
+              "value": "with_window",
+              "label": "Con ventana",
+              "image": { "id": 7598370, "photographer": "Max Vakhtbovych", "sourcePage": "https://www.pexels.com/photo/a-sauna-bath-with-a-wooden-interior-7598370/" }
+            },
+            {
+              "value": "without_window",
+              "label": "Sin ventana",
+              "image": { "id": 37816610, "photographer": "HUUM sauna heaters", "sourcePage": "https://www.pexels.com/photo/elegant-modern-indoor-sauna-with-wooden-benches-37816610/" }
+            }
+          ]
+        },
+        {
+          "id": "setting",
+          "label": "¿Interior o exterior?",
+          "options": [
+            {
+              "value": "indoor",
+              "label": "Interior",
+              "image": { "id": 37816610, "photographer": "HUUM sauna heaters", "sourcePage": "https://www.pexels.com/photo/elegant-modern-indoor-sauna-with-wooden-benches-37816610/" }
+            },
+            {
+              "value": "outdoor",
+              "label": "Exterior",
+              "image": { "id": 29306914, "photographer": "Teju", "sourcePage": "https://www.pexels.com/photo/cozy-cabin-in-the-woods-with-outdoor-sauna-29306914/" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "priceBands": [
+    { "sizeValue": "small", "label": "$50,000 – $100,000 MXN", "minMxn": 50000, "maxMxn": 100000 },
+    { "sizeValue": "medium", "label": "$100,000 – $150,000 MXN", "minMxn": 100000, "maxMxn": 150000 },
+    { "sizeValue": "large", "label": "$150,000 – $300,000 MXN", "minMxn": 150000, "maxMxn": 300000 }
+  ]
+}

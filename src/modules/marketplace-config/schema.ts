@@ -36,6 +36,12 @@ export const marketplaceFileSchema = z.strictObject({
    */
   lead_scoring: z.string().min(1).optional(),
   /**
+   * Optional filename for a visual pre-questionnaire config (see configurator
+   * module). Absent by default — a marketplace with no visual configurator
+   * gets none, with no branch anywhere keyed on which marketplace this is.
+   */
+  configurator: z.string().min(1).optional(),
+  /**
    * Public header/footer links. Each marketplace lists only the destinations it
    * actually has, so a shared header can never render a link to a section this
    * marketplace does not publish. The primary "cotizar" CTA is not listed here:

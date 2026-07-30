@@ -19,9 +19,14 @@ matching: ./matching.yaml
 # Optional: grades every submitted lead A/B/C for sale to providers. Omitted by
 # pergolas-mx on purpose — see docs on lead-scoring config.
 lead_scoring: ./lead-scoring.yaml
+# Optional: a standalone visual 5-step pre-questionnaire at /disena-tu-sauna
+# that hands its answers into /cotizar. Never graded — see lead-scoring above.
+configurator: ./configurator.json
 # Public header and footer links. Only destinations this marketplace actually
 # publishes — the shared chrome renders exactly what is listed here.
 nav:
+  - label: Diseña tu sauna
+    href: /disena-tu-sauna
   - label: Lugares para sauna
     href: /lugares
   - label: Construye tu sauna
