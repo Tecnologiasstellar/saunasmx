@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
+import { configuratorFileSchema } from '../configurator/schema';
 import { leadScoringFileSchema } from '../lead-scoring/schema';
 import {
   marketplaceFileSchema,
@@ -13,6 +14,7 @@ import {
 } from './schema';
 import {
   ConfigValidationError,
+  type ConfiguratorConfig,
   type LeadScoringConfig,
   type MarketplaceConfig,
   type MatchingConfig,
@@ -208,13 +210,29 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
     }
   }
 
-  if (!questionnaire || !matching || (file.lead_scoring && !leadScoring)) return null;
+  let configurator: ConfiguratorConfig | null | undefined;
+  if (file.configurator) {
+    const configuratorPath = resolve(dirname(marketplacePath), file.configurator);
+    try {
+      const result = configuratorFileSchema.safeParse(JSON.parse(readFile(configuratorPath)));
+      if (result.success) {
+        configurator = result.data;
+      } else {
+        issues.push(...formatIssues(`${slugFromDir}/${file.configurator}`, result.error));
+      }
+    } catch (error) {
+      issues.push(`${slugFromDir}/${file.configurator}: unreadable — ${(error as Error).message}`);
+    }
+  }
+
+  if (!questionnaire || !matching || (file.lead_scoring && !leadScoring) || (file.configurator && !configurator)) return null;
 
   const configVersion = createHash('sha256')
     .update(readFile(marketplacePath))
     .update(readFile(questionnairePath))
     .update(readFile(matchingPath))
     .update(file.lead_scoring ? readFile(resolve(dirname(marketplacePath), file.lead_scoring)) : '')
+    .update(file.configurator ? readFile(resolve(dirname(marketplacePath), file.configurator)) : '')
     .digest('hex')
     .slice(0, 16);
 
@@ -234,6 +252,7 @@ function loadOne(dir: string, issues: string[]): MarketplaceConfig | null {
     questionnaire,
     matching,
     leadScoring: leadScoring ?? undefined,
+    configurator: configurator ?? undefined,
     configVersion,
   };
 }

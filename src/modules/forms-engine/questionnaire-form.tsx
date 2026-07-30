@@ -47,6 +47,7 @@ export function QuestionnaireForm({
   marketplaceSlug,
   consentLabel,
   initialPostalCode = '',
+  initialAnswers,
   preferredProviderSlug,
 }: {
   questionnaire: Questionnaire;
@@ -60,6 +61,14 @@ export function QuestionnaireForm({
    */
   initialPostalCode?: string;
   /**
+   * Prefill for `answers`-backed fields (e.g. `capacity`, `setting`), from the
+   * /disena-tu-sauna configurator's handoff. The route validates each value
+   * against this questionnaire's own option list before passing it here — see
+   * cotizar/page.tsx — so a crafted link cannot pre-fill a value the
+   * questionnaire would not itself have offered.
+   */
+  initialAnswers?: Answers;
+  /**
    * Set when the visitor started on a provider's directory page. The route
    * resolves it against a published profile before passing it here, so an
    * unknown slug never reaches the payload.
@@ -70,7 +79,7 @@ export function QuestionnaireForm({
   const steps = questionnaire.steps;
 
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answers>({});
+  const [answers, setAnswers] = useState<Answers>(() => initialAnswers ?? {});
   const [location, setLocation] = useState<Location>({ postalCode: initialPostalCode, city: '', state: '', streetAddress: '' });
   const [contact, setContact] = useState<Contact>({ name: '', email: '', phone: '' });
   const [consent, setConsent] = useState(false);
