@@ -6,6 +6,7 @@ import { getPublicProfile } from '@/modules/directory/queries';
 import { consentStep } from '@/modules/forms-engine/intake-schema';
 import { QuestionnaireForm } from '@/modules/forms-engine/questionnaire-form';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
+import { findSelectOptions } from '@/modules/marketplace-config/types';
 import { resolveRequestHost } from '@/modules/site/context';
 import { Container } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
@@ -49,6 +50,20 @@ export default async function QuestionnairePage({
     ? await getPublicProfile(db, await getMarketplaceId(db, config.slug), 'provider', requested)
     : null;
 
+  // Prefill from the /disena-tu-sauna configurator's handoff. Each value is
+  // only accepted when it is one of this questionnaire's own real option
+  // values for that field — a crafted link cannot pre-fill a value the
+  // questionnaire would not itself have offered, and an unrecognised value is
+  // dropped rather than echoed back.
+  const initialAnswers: Record<string, string> = {};
+  for (const field of ['capacity', 'setting']) {
+    const value = one(field);
+    const options = findSelectOptions(config.questionnaire, field);
+    if (value && options?.some((option) => option.value === value)) {
+      initialAnswers[field] = value;
+    }
+  }
+
   return (
     <>
       <SiteHeader config={config} />
@@ -87,6 +102,7 @@ export default async function QuestionnairePage({
           marketplaceSlug={config.slug}
           consentLabel={consent?.label ?? 'Acepto que se compartan mis datos con proveedores relevantes.'}
           initialPostalCode={initialPostalCode}
+          initialAnswers={initialAnswers}
           preferredProviderSlug={provider?.slug}
         />
       </main>
