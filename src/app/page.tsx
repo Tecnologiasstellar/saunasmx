@@ -8,6 +8,8 @@ import { getDb } from '@/modules/database/client';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProfiles } from '@/modules/directory/queries';
 import { toProfileViews } from '@/modules/directory/view-model';
+import { siteOrigin } from '@/modules/directory/page-data';
+import { JsonLd, organizationJsonLd } from '@/modules/seo/json-ld';
 import { isProduction, resolveRequestHost } from '@/modules/site/context';
 import { HERO_PHOTO, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
 import { heroPhotoFor } from '@/modules/blog/hero-image';
@@ -70,11 +72,13 @@ export default async function LandingPage() {
   const columns = blocks.map((block) => (block.blockType === 'columns' ? asColumns(block.content) : null)).find(Boolean);
   const faq = blocks.map((block) => (block.blockType === 'faq' ? asFaq(block.content) : null)).find(Boolean);
 
-  // Assigned as a set so the two cards in this row never show the same photo.
 
   return (
     <>
       <SiteHeader config={config} />
+      <JsonLd
+        data={organizationJsonLd({ config, origin: await siteOrigin(), description: page?.description ?? undefined })}
+      />
 
       <main>
         {/* HERO ------------------------------------------------------------ */}
@@ -231,7 +235,7 @@ export default async function LandingPage() {
                     articles.length > 1 ? 'md:grid-cols-[1.1fr_1fr]' : 'md:max-w-[640px]'
                   }`}
                 >
-                  {articles.map((article, index) => (
+                  {articles.map((article) => (
                     <Link
                       key={article.slug}
                       href={`/blog/${article.slug}`}

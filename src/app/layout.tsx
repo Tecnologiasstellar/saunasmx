@@ -19,7 +19,16 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: config.name, template: `%s · ${config.name}` },
     alternates: { canonical: '/' },
     robots: { index: indexable, follow: indexable },
-    openGraph: { siteName: config.name, locale: config.localization.locale, type: 'website' },
+    openGraph: {
+      siteName: config.name,
+      locale: config.localization.locale,
+      type: 'website',
+      // Without this every share on WhatsApp, Facebook and LinkedIn renders a
+      // blank grey box. Inherited by every page; pages with a better image of
+      // their own (a blog article's hero) override it.
+      images: [{ url: '/og.jpg', width: 1200, height: 630, alt: config.name }],
+    },
+    twitter: { card: 'summary_large_image' },
   };
 }
 
