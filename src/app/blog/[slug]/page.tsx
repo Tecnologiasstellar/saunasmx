@@ -7,7 +7,7 @@ import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProfiles } from '@/modules/directory/queries';
 import { toProfileViews } from '@/modules/directory/view-model';
 import { canonicalOrigin, isProduction, resolveRequestHost } from '@/modules/site/context';
-import { articlePhoto } from '@/modules/ui/photos';
+import { heroPhotoFor } from '@/modules/blog/hero-image';
 import { Container, Eyebrow, PhotoFigure, buttonClass } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 import { DirectoryCard } from '@/modules/ui/directory-card';
@@ -115,7 +115,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <Container className="pb-4">
           <PhotoFigure
-            photo={articlePhoto(post.slug)}
+            photo={heroPhotoFor(post)}
             ratio="aspect-[21/9]"
             sizes="(min-width: 1200px) 1200px, 100vw"
             className="max-w-[1200px]"

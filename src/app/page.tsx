@@ -8,7 +8,8 @@ import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProfiles } from '@/modules/directory/queries';
 import { toProfileViews } from '@/modules/directory/view-model';
 import { resolveRequestHost } from '@/modules/site/context';
-import { HERO_PHOTO, articlePhotos, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
+import { HERO_PHOTO, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
+import { heroPhotoFor } from '@/modules/blog/hero-image';
 import { ButtonLink, Card, Chip, Container, Eyebrow, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
 import { QuizPreview } from '@/modules/ui/quiz-preview';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
@@ -47,7 +48,6 @@ export default async function LandingPage() {
   const faq = blocks.map((block) => (block.blockType === 'faq' ? asFaq(block.content) : null)).find(Boolean);
 
   // Assigned as a set so the two cards in this row never show the same photo.
-  const articleImages = articlePhotos(articles.map((article) => article.slug));
 
   return (
     <>
@@ -215,7 +215,7 @@ export default async function LandingPage() {
                       className="group flex flex-col gap-4 text-inherit"
                     >
                       <PhotoFigure
-                        photo={articleImages[index]!}
+                        photo={heroPhotoFor(article)}
                         sizes="(min-width: 768px) 45vw, 100vw"
                         className="lift"
                       />

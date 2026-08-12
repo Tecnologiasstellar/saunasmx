@@ -32,6 +32,22 @@ export const posts = pgTable(
      * free scheduling.
      */
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    /**
+     * Hero photograph, chosen at publish time from the article's own topic and
+     * then frozen here.
+     *
+     * Stored rather than derived: deriving it from the slug meant a fixed pool
+     * had to cover an ever-growing archive, so images repeated and matched the
+     * subject only by accident. All four columns move together — a URL with no
+     * photographer is a credit we cannot render — and all are nullable, because
+     * posts published before this existed have none and the site must still
+     * render them.
+     */
+    heroImageUrl: text('hero_image_url'),
+    heroImageAlt: text('hero_image_alt'),
+    heroImagePhotographer: text('hero_image_photographer'),
+    /** Pexels page for the photo. The licence trail, same as the static catalogue. */
+    heroImageSource: text('hero_image_source'),
     /** Semantic vector over title + body, used to pick internal link targets. */
     vectorEmbedding: vector('vector_embedding', { dimensions: EMBEDDING_DIMENSIONS }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

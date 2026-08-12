@@ -309,7 +309,7 @@ describe('provider trust', () => {
     const outcome = await submitProject(db, {
       config,
       marketplaceId: suanas(),
-      input: makeIntake(config, { postalCode: '01000', answers: { type: 'traditional', budget: '100000_200000' } }),
+      input: makeIntake(config, { postalCode: '01000', answers: { type: 'traditional', budget: '100000_150000' } }),
       correlationId: 'req_test',
     });
     await qualifyLead(db, { leadId: outcome.leadId!, marketplaceId: suanas(), actor, correlationId: 'req_test' });

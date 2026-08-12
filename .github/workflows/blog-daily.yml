@@ -36,3 +36,6 @@ jobs:
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Optional. Unset = the hero image falls back to the static catalogue,
+          # which repeats across articles. Free key: https://www.pexels.com/api/
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}

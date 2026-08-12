@@ -46,7 +46,7 @@ describe('project intake transaction', () => {
   it('creates every required record in one transaction', async () => {
     const config = published.config('suanas-mx');
     const marketplaceId = published.id('suanas-mx');
-    const input = makeIntake(config, { answers: { type: 'traditional', budget: '100000_200000' } });
+    const input = makeIntake(config, { answers: { type: 'traditional', budget: '100000_150000' } });
 
     const outcome = await submitProject(db, { config, marketplaceId, input, correlationId: 'req_test' });
     expect(outcome.status).toBe('created');
@@ -76,7 +76,7 @@ describe('project intake transaction', () => {
       .from(questionnaireResponse)
       .where(eq(questionnaireResponse.projectId, outcome.projectId));
     // The raw payload is preserved verbatim alongside the structured values.
-    expect(response?.answersJson).toMatchObject({ type: 'traditional', budget: '100000_200000' });
+    expect(response?.answersJson).toMatchObject({ type: 'traditional', budget: '100000_150000' });
     expect(response?.questionnaireId).toBe(config.questionnaire.id);
 
     const [attribution] = await db.select().from(attributionTouch).where(eq(attributionTouch.projectId, outcome.projectId));
@@ -207,7 +207,27 @@ describe('project intake transaction', () => {
   });
 
   it('treats free text carrying multiple links as spam', async () => {
-    const config = published.config('suanas-mx');
+    // The rule scans every string in `answers`. It used to be proved through a
+    // `notes` step, but the lead-grading rebuild removed it and neither live
+    // questionnaire now has a free-text answer at all — the only text fields
+    // left (city, street_address) travel in `location`, which this rule does
+    // not read. So the config gets the step appended here, which keeps the rule
+    // covered against the day a marketplace adds free text back.
+    //
+    // Worth knowing: as configured today this rule cannot fire on either live
+    // marketplace. It is a guard for future configs, not active protection.
+    const base = published.config('suanas-mx');
+    const config: typeof base = {
+      ...base,
+      questionnaire: {
+        ...base.questionnaire,
+        steps: [
+          ...base.questionnaire.steps,
+          { id: 'notes', type: 'long_text', label: 'Detalles', required: false, maxLength: 500 },
+        ],
+      },
+    };
+
     const outcome = await submitProject(db, {
       config,
       marketplaceId: published.id('suanas-mx'),

@@ -17,6 +17,7 @@
     "blog:generate": "drizzle-kit generate --config=drizzle.blog.config.ts",
     "blog:migrate": "tsx scripts/blog-migrate.ts",
     "blog:agent": "tsx scripts/daily_agent.ts",
+    "blog:backfill-images": "tsx scripts/backfill-hero-images.ts",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "bootstrap:production": "tsx scripts/bootstrap-production.ts",

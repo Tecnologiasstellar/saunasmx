@@ -30,30 +30,47 @@
  * by being added to the catalogue below.
  */
 
-export type Photo = {
-  /** Pexels photo id. Also the filename stem, so any image traces back to its source page. */
-  id: number;
+type PhotoBase = {
   alt: string;
   photographer: string;
   /** Pexels page for this photo — the licence trail. */
   source: string;
-  /** Width requested from the Pexels CDN. Natural aspect ratio; CSS does the cropping. */
-  width: number;
   /**
    * CSS object-position. Set per photo because most of these are portrait and
    * the slots are wide: a default centre crop cuts the subject's head off.
    */
   focus?: string;
+};
+
+/** One of the images committed under public/img and served by us. */
+export type CataloguePhoto = PhotoBase & {
+  /** Pexels photo id. Also the filename stem, so any image traces back to its source page. */
+  id: number;
+  /** Width requested from the Pexels CDN. Natural aspect ratio; CSS does the cropping. */
+  width: number;
   /** Which half of contrast therapy this shows. Used to match a photo to an article. */
   mode: 'heat' | 'cold';
 };
 
-export const photoSrc = (photo: Photo) => `/img/pexels-${photo.id}.jpg`;
+/**
+ * A photo found at publish time and stored on the article, served from the
+ * Pexels CDN rather than by us.
+ *
+ * The catalogue is self-hosted precisely so the site does not depend on someone
+ * else's CDN. This one cannot be: it is discovered while the daily agent runs,
+ * and Vercel's filesystem is read-only. A real trade-off, accepted because the
+ * alternative is a blog whose images repeat forever.
+ */
+export type RemotePhoto = PhotoBase & { url: string };
+
+export type Photo = CataloguePhoto | RemotePhoto;
+
+export const photoSrc = (photo: Photo) => ('url' in photo ? photo.url : `/img/pexels-${photo.id}.jpg`);
 export const photoCredit = (photo: Photo) => `Foto: ${photo.photographer} / Pexels`;
 export const photoFocus = (photo: Photo) => photo.focus ?? '50% 50%';
 
 /** Above the fold on every landing page. Fetched wider than the rest because it goes full-bleed. */
-export const HERO_PHOTO: Photo = {
+export const HERO_PHOTO: CataloguePhoto = {
   id: 3967280,
   alt: 'Mujer recostada sobre la banca de madera de una sauna',
   photographer: 'Andrea Piacquadio',
@@ -71,7 +88,7 @@ export const HERO_PHOTO: Photo = {
  * our own header would read as a partnership we do not have. Also excludes the
  * cold-water rescue frame, which only belongs beside a safety article.
  */
-export const ARTICLE_PHOTOS: Photo[] = [
+export const ARTICLE_PHOTOS: CataloguePhoto[] = [
   {
     id: 8092430,
     alt: 'Interior de una sauna de madera con bancas, cubetas y estufa de piedras',
@@ -167,7 +184,7 @@ export const ARTICLE_PHOTOS: Photo[] = [
  * `mode` is inert here — these never pass through `poolFor`/`articlePhoto`,
  * it exists only because the shared `Photo` type requires it.
  */
-export const CONFIGURATOR_PHOTOS: Photo[] = [
+export const CONFIGURATOR_PHOTOS: CataloguePhoto[] = [
   { id: 7598363, alt: 'Interior de una sauna pequeña con acabados en madera', photographer: 'Max Vakhtbovych', source: 'https://www.pexels.com/photo/view-of-a-brown-room-7598363/', width: 1200, mode: 'heat' },
   { id: 32504779, alt: 'Interior de una sauna mediana con una estufa de piedras al centro', photographer: 'HUUM sauna heaters', source: 'https://www.pexels.com/photo/modern-wooden-sauna-interior-with-heater-32504779/', width: 1200, mode: 'heat' },
   { id: 23330922, alt: 'Vista superior de una sauna grande con varias filas de bancas de madera', photographer: 'Batuhan Kocabaş', source: 'https://www.pexels.com/photo/high-angle-view-of-a-sauna-23330922/', width: 1200, mode: 'heat' },
@@ -185,7 +202,7 @@ export const CONFIGURATOR_PHOTOS: Photo[] = [
   { id: 29306914, alt: 'Sauna de madera al aire libre junto a una cabaña rodeada de vegetación', photographer: 'Teju', source: 'https://www.pexels.com/photo/cozy-cabin-in-the-woods-with-outdoor-sauna-29306914/', width: 1200, mode: 'heat' },
 ];
 
-export const ALL_PHOTOS: Photo[] = [HERO_PHOTO, ...ARTICLE_PHOTOS, ...CONFIGURATOR_PHOTOS];
+export const ALL_PHOTOS: CataloguePhoto[] = [HERO_PHOTO, ...ARTICLE_PHOTOS, ...CONFIGURATOR_PHOTOS];
 
 /** Stable across deploys, so an article keeps its image instead of reshuffling on every build. */
 function hash(slug: string): number {
@@ -205,14 +222,14 @@ const COLD_WORDS = ['fria', 'frio', 'hielo', 'inmersion', 'plunge', 'nieve', 'co
  * sauna about half the time. Accent-insensitive because slugs are not reliably
  * normalised.
  */
-function poolFor(slug: string): Photo[] {
+function poolFor(slug: string): CataloguePhoto[] {
   const plain = slug.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   const wantsCold = COLD_WORDS.some((word) => plain.includes(word));
   const pool = ARTICLE_PHOTOS.filter((photo) => photo.mode === (wantsCold ? 'cold' : 'heat'));
   return pool.length > 0 ? pool : ARTICLE_PHOTOS;
 }
 
-export function articlePhoto(slug: string): Photo {
+export function articlePhoto(slug: string): CataloguePhoto {
   const pool = poolFor(slug);
   return pool[hash(slug) % pool.length]!;
 }
@@ -223,7 +240,7 @@ export function articlePhoto(slug: string): Photo {
  * the homepage showing the identical photo, which reads as a bug. Once a pool is
  * exhausted repeats resume — that is better than showing an off-topic photo.
  */
-export function articlePhotos(slugs: string[]): Photo[] {
+export function articlePhotos(slugs: string[]): CataloguePhoto[] {
   const used = new Set<number>();
   return slugs.map((slug) => {
     const pool = poolFor(slug);
