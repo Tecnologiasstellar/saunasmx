@@ -48,7 +48,7 @@ describe('isRelevant', () => {
  */
 describe('prohibitedClaimsIn', () => {
   it('catches an asserted claim', () => {
-    expect(prohibitedClaimsIn('La sauna quema grasa mientras descansas.')).toEqual(['quema grasa']);
+    expect(prohibitedClaimsIn('La sauna cura el insomnio en dos semanas.')).toEqual(['cura el insomnio']);
   });
 
   it('matches without accents or case', () => {
@@ -56,18 +56,42 @@ describe('prohibitedClaimsIn', () => {
   });
 
   it('allows the claim when the article is correcting it', () => {
-    expect(prohibitedClaimsIn('La sauna no quema grasa: lo que pierdes es agua.')).toEqual([]);
-    expect(prohibitedClaimsIn('Es un mito que la sauna elimina toxinas del cuerpo.')).toEqual([]);
+    expect(prohibitedClaimsIn('La sauna no cura el insomnio: solo ayuda a relajarte.')).toEqual([]);
+    expect(prohibitedClaimsIn('Es un mito que la sauna previene el cancer.')).toEqual([]);
   });
 
   it('still fails when one mention is corrected and another is asserted', () => {
-    const text = 'La sauna no quema grasa. Pero sí quema grasa abdominal si la usas a diario.';
-    expect(prohibitedClaimsIn(text)).toEqual(['quema grasa']);
+    const text = 'La sauna no cura el insomnio. Pero sí cura el insomnio si la usas a diario.';
+    expect(prohibitedClaimsIn(text)).toEqual(['cura el insomnio']);
   });
 
   it('passes ordinary protocol prose', () => {
     const text = 'Entra 12 minutos a 85 °C, sal, enfríate 2 minutos y repite tres rondas.';
     expect(prohibitedClaimsIn(text)).toEqual([]);
+  });
+
+  it('deliberately does not gate softer wellness puffery', () => {
+    // Narrowed 2026-07-28 on an explicit call: this gate covers the bright-line
+    // COFEPRIS territory (cure/prevent/treat a named condition, false clinical
+    // authority) and nothing else. "quema grasa" and "elimina toxinas" were
+    // dropped because they blocked the detox-myth articles whose entire purpose
+    // is debunking them.
+    //
+    // This test exists so that exclusion reads as a decision rather than a hole:
+    // these assertions failing means someone widened the gate again, and the
+    // detox-adjacent articles are about to start failing to publish.
+    expect(prohibitedClaimsIn('La sauna quema grasa mientras descansas.')).toEqual([]);
+    expect(prohibitedClaimsIn('La sauna elimina toxinas del cuerpo.')).toEqual([]);
+  });
+
+  it('still refuses to target puffery as a keyword, which is the layer that holds', () => {
+    // The claims gate stopped covering these, so the keyword blocklist is now
+    // the only thing keeping the agent off the topic. If this breaks, dropping
+    // them from the gate stops being safe.
+    expect(isRelevant('sauna quema grasa')).toBe(false);
+    expect(isRelevant('sauna detox')).toBe(false);
+    expect(isRelevant('sauna para bajar de peso')).toBe(false);
+    expect(isRelevant('sauna en casa')).toBe(true);
   });
 });
 

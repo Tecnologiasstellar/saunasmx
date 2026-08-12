@@ -11,8 +11,8 @@ import {
 } from '@/modules/database/schema';
 import { loadMarketplaceConfigs } from '@/modules/marketplace-config/loader';
 import { publishMarketplaceConfigs } from '@/modules/marketplace-config/publish';
-import type { MarketplaceConfig } from '@/modules/marketplace-config/types';
-import { buildIntakeSchema, type IntakeInput } from '@/modules/forms-engine/intake-schema';
+import type { GroupField, MarketplaceConfig, ShowIf } from '@/modules/marketplace-config/types';
+import { LOCATION_FIELD_IDS, buildIntakeSchema, type IntakeInput } from '@/modules/forms-engine/intake-schema';
 
 export type PublishedMarketplaces = {
   ids: Map<string, string>;
@@ -119,7 +119,37 @@ export async function seedProvider(db: Database, spec: ProviderSpec): Promise<{ 
   return { companyId, ownerUserId };
 }
 
-/** Builds a valid intake payload for a config, parsed through the real schema. */
+/** Is a conditional field on screen, given what has been answered so far? */
+function isVisible(showIf: ShowIf | undefined, answers: Record<string, string>): boolean {
+  if (!showIf) return true;
+  const current = answers[showIf.field];
+  if (showIf.equals !== undefined && current !== showIf.equals) return false;
+  if (showIf.notEquals !== undefined && current === showIf.notEquals) return false;
+  return true;
+}
+
+/**
+ * A value for a free-text field that satisfies its pattern.
+ *
+ * Throws rather than guessing: a fixture that quietly emits an invalid value
+ * surfaces later as a wall of Zod errors pointing at the schema, which is what
+ * made the previous breakage take so long to read.
+ */
+function textAnswer(field: Extract<GroupField, { kind: 'text' }>, postalCode: string): string {
+  const candidate = field.id.includes('postal') ? postalCode : 'Prueba 123';
+  if (!field.pattern || new RegExp(field.pattern).test(candidate)) return candidate;
+  throw new Error(`makeIntake has no test value matching ${field.id} (pattern ${field.pattern}) — add one.`);
+}
+
+/**
+ * Builds a valid intake payload for a config, parsed through the real schema.
+ *
+ * Walks every step type the questionnaire can hold. It used to fill only
+ * `single_select` steps, so when saunas.mx was rebuilt as a lead-grading funnel
+ * — moving location, specs and stage into `group` steps — every required field
+ * inside a group went unanswered and 37 integration tests failed on a schema
+ * error rather than on anything they were testing.
+ */
 export function makeIntake(
   config: MarketplaceConfig,
   overrides: {
@@ -131,9 +161,25 @@ export function makeIntake(
     idempotencyKey?: string;
   } = {},
 ): IntakeInput {
+  const postalCode = overrides.postalCode ?? '01000';
+
   const answers: Record<string, string> = {};
   for (const step of config.questionnaire.steps) {
-    if (step.type === 'single_select') answers[step.id] = step.options[0]!.value;
+    if (step.type === 'single_select' || step.type === 'multi_select') {
+      answers[step.id] = step.options[0]!.value;
+    } else if (step.type === 'postal_code') {
+      answers[step.id] = postalCode;
+    } else if (step.type === 'group') {
+      // Fields fill in order so a `showIf` can read the answer it depends on.
+      for (const field of step.fields) {
+        if (!field.required || !isVisible(field.showIf, answers)) continue;
+        // Location fields travel in `location`, not `answers` — the real form
+        // splits them the same way (LOCATION_FIELD_IDS), and the schema drops
+        // them from `answers` if you leave them there.
+        if (LOCATION_FIELD_IDS.has(field.id)) continue;
+        answers[field.id] = field.kind === 'select' ? field.options[0]!.value : textAnswer(field, postalCode);
+      }
+    }
   }
   Object.assign(answers, overrides.answers ?? {});
 
@@ -144,7 +190,7 @@ export function makeIntake(
       email: overrides.email ?? 'ana.prueba@example.com',
       phone: overrides.phone ?? '5512345678',
     },
-    location: { postalCode: overrides.postalCode ?? '01000' },
+    location: { postalCode },
     answers,
     consent: { leadContact: true, providerSharing: true, policyVersion: 'privacy-2026-01' },
     attribution: { source: 'google', medium: 'organic', campaign: 'brand', landingPath: '/' },

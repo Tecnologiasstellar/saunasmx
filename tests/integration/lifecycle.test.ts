@@ -53,7 +53,7 @@ async function readyLead(overrides: Parameters<typeof makeIntake>[1] = {}) {
   const outcome = await submitProject(db, {
     config,
     marketplaceId,
-    input: makeIntake(config, { answers: { type: 'traditional', budget: '100000_200000' }, ...overrides }),
+    input: makeIntake(config, { answers: { type: 'traditional', budget: '100000_150000' }, ...overrides }),
     correlationId: 'req_test',
   });
   await qualifyLead(db, {

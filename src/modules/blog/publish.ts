@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { and, desc, isNotNull, lte, sql } from 'drizzle-orm';
 import { getBlogDb } from '@/db/client';
 import { EMBEDDING_DIMENSIONS, posts } from '@/db/schema';
+import { pickHeroImage, type HeroImage } from './hero-image';
 
 /**
  * The daily publishing pipeline for the contrast-therapy blog.
@@ -216,9 +217,9 @@ function seedForDay(now: Date): { seed: string; cluster: string } {
  * Returns the prohibited claims the draft asserts, ignoring ones it is debunking.
  *
  * The lookback is 40 characters *within the same sentence* — enough to catch "no
- * quema grasa" and "es un mito que la sauna quema grasa", but stopping at the
- * previous full stop so a denial in one sentence cannot excuse an assertion in
- * the next one.
+ * cura el insomnio" and "es un mito que la sauna previene el cancer", but
+ * stopping at the previous full stop so a denial in one sentence cannot excuse
+ * an assertion in the next one.
  */
 export function prohibitedClaimsIn(text: string): string[] {
   const folded = fold(text);
@@ -808,6 +809,8 @@ export type PublishResult = {
   article?: Article;
   markdown?: string;
   jsonLd?: unknown;
+  /** Only on a dry run — the hero the real run would have published. */
+  heroImage?: HeroImage;
 };
 
 export async function publishDailyPost(options: { dryRun?: boolean; now?: Date } = {}): Promise<PublishResult> {
@@ -865,8 +868,24 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
     sourcesCited: article.sourceUrls.length,
   };
 
+  // Picked before the dry-run exit so `--dry` shows the photograph it would
+  // publish. A dry run that skips the image is no use for checking the image.
+  // Every hero already spoken for is passed in, so this article gets one no
+  // other post is using.
+  const takenImages = await getBlogDb()
+    .select({ url: posts.heroImageUrl })
+    .from(posts)
+    .where(isNotNull(posts.heroImageUrl));
+  const heroImage = await pickHeroImage({
+    title: article.title,
+    slug,
+    keyword: keyword.keyword,
+    usedUrls: takenImages.map((row) => row.url!),
+  });
+  console.log(`Hero: ${heroImage.alt}\n      ${heroImage.photographer} · ${heroImage.url}`);
+
   if (options.dryRun) {
-    return { ...base, embedded: false, written: false, article, markdown, jsonLd };
+    return { ...base, embedded: false, written: false, article, markdown, jsonLd, heroImage };
   }
 
   const vectorEmbedding = await embed(`${article.title}\n\n${markdown}`);
@@ -880,9 +899,15 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
       seoMetaDescription: article.seoMetaDescription,
       jsonLdSchema: jsonLd,
       publishedAt: now,
+      heroImageUrl: heroImage.url,
+      heroImageAlt: heroImage.alt,
+      heroImagePhotographer: heroImage.photographer,
+      heroImageSource: heroImage.source,
       vectorEmbedding,
     })
-    // A same-day rerun updates rather than exploding on the unique slug.
+    // A same-day rerun updates rather than exploding on the unique slug. The
+    // hero is deliberately not in this set: a republish must not reshuffle the
+    // photograph of an article people have already seen and linked to.
     .onConflictDoUpdate({
       target: posts.slug,
       set: {

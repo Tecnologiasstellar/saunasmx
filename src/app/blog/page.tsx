@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { listRecentPosts } from '@/db/queries';
 import { isProduction, resolveRequestHost } from '@/modules/site/context';
-import { articlePhotos } from '@/modules/ui/photos';
+import { heroPhotoFor } from '@/modules/blog/hero-image';
 import { Card, Container, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 
@@ -35,7 +35,6 @@ export default async function BlogIndexPage() {
 
   const recent = await listRecentPosts(50);
   // Assigned as a set so no two cards in the grid repeat a photo.
-  const postImages = articlePhotos(recent.map((post) => post.slug));
 
   return (
     <>
@@ -66,7 +65,7 @@ export default async function BlogIndexPage() {
                 <li key={post.slug}>
                   <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-4 text-inherit">
                     <PhotoFigure
-                      photo={postImages[index]!}
+                      photo={heroPhotoFor(post)}
                       sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
                       className="lift"
                     />

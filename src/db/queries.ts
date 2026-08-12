@@ -27,7 +27,10 @@ export async function getPublishedPost(slug: string): Promise<Post | null> {
   return row ?? null;
 }
 
-export type PostSummary = Pick<Post, 'slug' | 'title' | 'seoMetaDescription' | 'publishedAt'>;
+export type PostSummary = Pick<
+  Post,
+  'slug' | 'title' | 'seoMetaDescription' | 'publishedAt' | 'heroImageUrl' | 'heroImageAlt' | 'heroImagePhotographer'
+>;
 
 export async function listRecentPosts(limit: number): Promise<PostSummary[]> {
   if (!blogConfigured()) return [];
@@ -38,6 +41,9 @@ export async function listRecentPosts(limit: number): Promise<PostSummary[]> {
       title: posts.title,
       seoMetaDescription: posts.seoMetaDescription,
       publishedAt: posts.publishedAt,
+      heroImageUrl: posts.heroImageUrl,
+      heroImageAlt: posts.heroImageAlt,
+      heroImagePhotographer: posts.heroImagePhotographer,
     })
     .from(posts)
     .where(isLive())

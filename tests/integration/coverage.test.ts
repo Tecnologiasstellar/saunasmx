@@ -75,7 +75,7 @@ async function readyLead(postalCode = '01000', type = 'traditional') {
   const outcome = await submitProject(db, {
     config,
     marketplaceId,
-    input: makeIntake(config, { postalCode, answers: { type, budget: '100000_200000' } }),
+    input: makeIntake(config, { postalCode, answers: { type, budget: '100000_150000' } }),
     correlationId: 'req_test',
   });
   await qualifyLead(db, {
