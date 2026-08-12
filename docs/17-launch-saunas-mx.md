@@ -60,7 +60,7 @@ In GoDaddy → My Products → saunas.mx → DNS: delete the parked `A @` record
 any conflicting `CNAME www`, then add the two above with the lowest available
 TTL. Certificates issue within minutes of propagation.
 
-`www.saunas.mx` and both `suanas.mx` spellings 308-redirect to the apex —
+`www.saunas.mx` 308-redirects to the apex —
 already configured under `aliases` in `config/marketplaces/suanas-mx/marketplace.yaml`.
 
 ## 4. Resend sending domain
@@ -73,7 +73,7 @@ lead notification arrives.
 ## 5. Verify live (do not skip)
 
 1. `https://saunas.mx` loads with Saunas México branding.
-2. `https://www.saunas.mx` and `https://suanas.mx` 308 to the apex over HTTPS.
+2. `https://www.saunas.mx` 308s to the apex over HTTPS.
 3. Submit a real questionnaire at `/cotizar` → `/gracias` renders.
 4. Drain the outbox and confirm the ops notification arrives:
 

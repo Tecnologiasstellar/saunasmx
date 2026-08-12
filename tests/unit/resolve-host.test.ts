@@ -39,17 +39,17 @@ function config(slug: string, domain: string, aliases: string[] = []): Marketpla
   };
 }
 
-const CONFIGS = [config('suanas-mx', 'suanas.mx', ['saunas.mx', 'www.suanas.mx']), config('pergolas-mx', 'pergolas.example.mx')];
+const CONFIGS = [config('suanas-mx', 'saunas.mx', ['www.saunas.mx']), config('pergolas-mx', 'pergolas.example.mx')];
 
 describe('normalizeHost', () => {
   it.each([
-    ['Suanas.MX', 'suanas.mx'],
-    ['suanas.mx:443', 'suanas.mx'],
-    ['suanas.mx:80', 'suanas.mx'],
-    ['suanas.mx.', 'suanas.mx'],
-    ['  suanas.mx  ', 'suanas.mx'],
-    ['https://suanas.mx/guias', 'suanas.mx'],
-    ['user:pass@suanas.mx', 'suanas.mx'],
+    ['Saunas.MX', 'saunas.mx'],
+    ['saunas.mx:443', 'saunas.mx'],
+    ['saunas.mx:80', 'saunas.mx'],
+    ['saunas.mx.', 'saunas.mx'],
+    ['  saunas.mx  ', 'saunas.mx'],
+    ['https://saunas.mx/guias', 'saunas.mx'],
+    ['user:pass@saunas.mx', 'saunas.mx'],
     ['localhost:3000', 'localhost:3000'],
   ])('normalizes %s to %s', (input, expected) => {
     expect(normalizeHost(input)).toBe(expected);
@@ -63,7 +63,7 @@ describe('normalizeHost', () => {
 
 describe('resolveHost', () => {
   it('resolves the canonical domain', () => {
-    const result = resolveHost('suanas.mx', CONFIGS);
+    const result = resolveHost('saunas.mx', CONFIGS);
     expect(result.kind).toBe('canonical');
     if (result.kind !== 'canonical') throw new Error('unreachable');
     expect(result.config.slug).toBe('suanas-mx');
@@ -77,20 +77,19 @@ describe('resolveHost', () => {
   });
 
   it('redirects an alias to the canonical host', () => {
-    const result = resolveHost('www.suanas.mx', CONFIGS);
+    const result = resolveHost('www.saunas.mx', CONFIGS);
     expect(result.kind).toBe('redirect');
     if (result.kind !== 'redirect') throw new Error('unreachable');
-    expect(result.canonicalHost).toBe('suanas.mx');
+    expect(result.canonicalHost).toBe('saunas.mx');
     expect(result.config.slug).toBe('suanas-mx');
   });
 
-  it('redirects the misspelling alias, which is why the domain is configurable', () => {
-    const result = resolveHost('saunas.mx', CONFIGS);
-    expect(result.kind).toBe('redirect');
+  it('does not redirect the canonical host to itself', () => {
+    expect(resolveHost('saunas.mx', CONFIGS).kind).toBe('canonical');
   });
 
   it('is case and port insensitive', () => {
-    expect(resolveHost('SUANAS.MX:443', CONFIGS).kind).toBe('canonical');
+    expect(resolveHost('SAUNAS.MX:443', CONFIGS).kind).toBe('canonical');
   });
 
   it('fails safely on an unknown host', () => {

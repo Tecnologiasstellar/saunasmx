@@ -2,11 +2,10 @@ id: suanas-mx
 slug: suanas-mx
 name: Saunas México
 domain: saunas.mx
-# Hostnames that permanently redirect to the canonical domain. Add a corrected
-# spelling here if the canonical domain ever changes — no code change needed.
+# Hostnames that permanently redirect to the canonical domain above. Only list
+# hostnames that actually resolve to this deployment — an alias for a domain
+# nobody owns does nothing except imply we own it.
 aliases:
-  - suanas.mx
-  - www.suanas.mx
   - www.saunas.mx
 category: sauna
 localization:

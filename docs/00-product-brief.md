@@ -6,7 +6,7 @@ Create a reusable Marketplace OS that turns high-intent traffic into qualified, 
 
 ## First marketplace
 
-`suanas.mx` is the first implementation. The exact domain spelling must remain configurable and canonical. The platform must support aliases and redirects so a future spelling/domain correction does not require a rebuild.
+`saunas.mx` is the first implementation. The domain stays configurable and canonical, with alias redirects, so a future domain change does not require a rebuild.
 
 ## Customer promise
 

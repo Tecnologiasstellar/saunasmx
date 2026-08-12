@@ -29,7 +29,7 @@ npm run build            ✓
 ## Foundation gate
 
 - [x] One shared app resolves marketplace by host — `tests/unit/resolve-host.test.ts`.
-- [x] Canonical domain and alias redirect behaviour are tested — unit tests; `www.suanas.mx` → `suanas.mx` observed as a 308 preserving path and query.
+- [x] Canonical domain and alias redirect behaviour are tested — unit tests; `www.saunas.mx` → `saunas.mx` observed as a 308 preserving path and query.
 - [x] Two marketplace configs render distinct name/theme/content — `tests/e2e/second-marketplace.spec.ts`.
 - [x] Unknown host fails safely — 404 from `src/proxy.ts` with no branding, asserted in E2E.
 - [x] Config schema rejects duplicate/invalid identifiers — 16 cases in `tests/unit/marketplace-config.test.ts`.

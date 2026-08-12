@@ -2,7 +2,7 @@
 
 ## Goal
 
-Reach a working `suanas.mx`-configured marketplace while proving that a second category can be rendered and operated without category-specific rewrites.
+Reach a working `saunas.mx`-configured marketplace while proving that a second category can be rendered and operated without category-specific rewrites.
 
 ## Phase 0 — Specification lock
 

@@ -12,7 +12,13 @@ const PERGOLAS = 'http://pergolas.localhost:3100';
 test('renders a distinct brand and theme from the shared code path', async ({ page }) => {
   await page.goto(`${PERGOLAS}/`);
 
-  await expect(page).toHaveTitle(/Pérgolas México/);
+  // The title comes from this marketplace's own published landing row, so it
+  // reads "Pérgolas a medida en México" rather than the bare brand name. What
+  // matters is that it is *this* marketplace's copy and carries none of the
+  // other one's — a shared template leaking the sauna brand here is the actual
+  // failure this guards against.
+  await expect(page).toHaveTitle(/Pérgolas/);
+  await expect(page).not.toHaveTitle(/Sauna/i);
   await expect(page.locator('h1')).toContainText('Pérgolas a medida');
 
   // The theme is applied from the marketplace's configured theme key.
