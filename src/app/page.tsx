@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -7,7 +8,7 @@ import { getDb } from '@/modules/database/client';
 import { getMarketplaceId } from '@/modules/marketplace-config/publish';
 import { listPublicProfiles } from '@/modules/directory/queries';
 import { toProfileViews } from '@/modules/directory/view-model';
-import { resolveRequestHost } from '@/modules/site/context';
+import { isProduction, resolveRequestHost } from '@/modules/site/context';
 import { HERO_PHOTO, photoCredit, photoFocus, photoSrc } from '@/modules/ui/photos';
 import { heroPhotoFor } from '@/modules/blog/hero-image';
 import { ButtonLink, Card, Chip, Container, Eyebrow, PhotoFigure, SectionHeading } from '@/modules/ui/primitives';
@@ -26,6 +27,28 @@ import { DirectoryCard } from '@/modules/ui/directory-card';
 
 const FEATURED_SUPPLIERS = 3;
 const FEATURED_ARTICLES = 2;
+
+/**
+ * The landing page had no metadata export at all, so the most important page on
+ * the site shipped with no meta description and a title of just the marketplace
+ * name. Both already exist on the published content row — this reads them from
+ * the same place the page body does, so the copy stays editable in one spot.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const resolution = await resolveRequestHost();
+  if (resolution.kind === 'unknown') return { title: 'Sitio no disponible', robots: { index: false, follow: false } };
+  const config = resolution.config;
+
+  const db = await getDb();
+  const page = await getPublishedPage(db, await getMarketplaceId(db, config.slug), 'landing', 'home');
+
+  return {
+    title: page?.title ?? config.name,
+    description: page?.description ?? undefined,
+    alternates: { canonical: '/' },
+    robots: { index: isProduction() && config.seo.defaultIndexing, follow: true },
+  };
+}
 
 export default async function LandingPage() {
   const resolution = await resolveRequestHost();
