@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { indexable, loadIndex } from '@/modules/directory/page-data';
+import { indexable, loadIndex, siteOrigin } from '@/modules/directory/page-data';
+import { JsonLd, itemListJsonLd } from '@/modules/seo/json-ld';
 import { DirectoryIndexPage } from '@/modules/ui/directory-profile';
 import { SiteFooter, SiteHeader } from '@/modules/ui/site-chrome';
 
@@ -30,6 +31,16 @@ export default async function ProvidersIndex({ searchParams }: { searchParams: S
   return (
     <>
       <SiteHeader config={data.config} />
+      <JsonLd
+        data={itemListJsonLd({
+          origin: await siteOrigin(),
+          path: '/proveedores',
+          name: data.activeState
+            ? `Proveedores de saunas en ${data.activeState}`
+            : 'Proveedores de saunas en México',
+          items: data.profiles,
+        })}
+      />
       <DirectoryIndexPage
         eyebrow="Directorio"
         title="Proveedores de saunas en México"

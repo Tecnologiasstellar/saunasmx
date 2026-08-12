@@ -61,7 +61,7 @@ export default async function BlogIndexPage() {
             </Card>
           ) : (
             <ul className="grid list-none gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
-              {recent.map((post, index) => (
+              {recent.map((post) => (
                 <li key={post.slug}>
                   <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-4 text-inherit">
                     <PhotoFigure

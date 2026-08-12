@@ -50,6 +50,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: post.seoMetaDescription,
       url: `${await siteOrigin()}/blog/${post.slug}`,
       publishedTime: post.publishedAt?.toISOString(),
+      // The article's own hero, so a shared link previews the picture the
+      // reader will actually see rather than the generic site image. Falls
+      // through to the layout's /og.jpg for posts published before heroes
+      // existed.
+      ...(post.heroImageUrl
+        ? { images: [{ url: post.heroImageUrl, alt: post.heroImageAlt ?? post.title }] }
+        : {}),
     },
   };
 }
