@@ -18,6 +18,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The failure step opens an issue. Nothing else here writes to the repo.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
@@ -39,3 +43,24 @@ jobs:
           # Optional. Unset = the hero image falls back to the static catalogue,
           # which repeats across articles. Free key: https://www.pexels.com/api/
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+
+      # A silent failure is a missing article nobody notices until the blog
+      # looks stale. An issue arrives through GitHub's normal notification mail:
+      # no extra service, no extra secret, no monthly bill.
+      - name: Abrir un issue si falló
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BODY=$(cat <<EOF
+          El job blog-daily falló: no se escribió nada en la base de datos y el blog se queda sin artículo hoy.
+
+          Log completo: $RUN_URL
+
+          Causas habituales:
+          - El guard de claims de salud rechazó los 3 borradores seguidos.
+          - La Anthropic API se quedó sin saldo.
+          EOF
+          )
+          gh issue create --title "Blog diario: sin artículo el $(date -u +%F)" --body "$BODY"

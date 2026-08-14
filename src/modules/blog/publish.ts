@@ -121,6 +121,12 @@ const ON_TOPIC = [
 const SERP_DEPTH = 10;
 const INTERNAL_LINK_POOL = 5;
 const TARGET_WORDS = 1500;
+/**
+ * A prohibited claim is usually one bad sentence in 1,500 good words, not a bad
+ * brief — rewriting clears it. Losing a whole day to the first draft's slip is
+ * the expensive failure. The research above is reused; only the writing repeats.
+ */
+const DRAFT_ATTEMPTS = 3;
 
 /**
  * The only citations the robot may use. Hand-checked public-health agencies,
@@ -830,15 +836,31 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
   const linkPool = priorPosts.slice(0, INTERNAL_LINK_POOL);
   console.log(`SERP: ${serp.length} · metrics: ${metrics.length} · link pool: ${linkPool.length}`);
 
-  const article = await writeArticle({ keyword, serp, metrics, priorPosts: linkPool });
-  const markdown = assembleMarkdown(article);
+  let draft: { article: Article; markdown: string } | null = null;
+  let violations: string[] = [];
+
+  for (let attempt = 1; attempt <= DRAFT_ATTEMPTS; attempt++) {
+    const candidate = await writeArticle({ keyword, serp, metrics, priorPosts: linkPool });
+    const candidateMarkdown = assembleMarkdown(candidate);
+    violations = prohibitedClaimsIn(`${candidate.title} ${candidateMarkdown}`);
+    if (!violations.length) {
+      draft = { article: candidate, markdown: candidateMarkdown };
+      break;
+    }
+    console.warn(
+      `Attempt ${attempt}/${DRAFT_ATTEMPTS} asserts prohibited claim(s): ${violations.join(', ')}. Rewriting.`,
+    );
+  }
 
   // Gate, not a warning. A prohibited health claim is the one failure worth
   // losing a day over, so this throws before anything reaches the database.
-  const violations = prohibitedClaimsIn(`${article.title} ${markdown}`);
-  if (violations.length) {
-    throw new Error(`Draft asserts prohibited health claim(s): ${violations.join(', ')}. Nothing was published.`);
+  if (!draft) {
+    throw new Error(
+      `Draft asserts prohibited health claim(s) after ${DRAFT_ATTEMPTS} attempts: ${violations.join(', ')}. Nothing was published.`,
+    );
   }
+
+  const { article, markdown } = draft;
 
   const slug = slugify(article.title);
   const jsonLd = buildJsonLd({ article, slug, keyword: keyword.keyword, cluster, publishedAt: now });
