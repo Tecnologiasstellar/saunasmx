@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { and, desc, isNotNull, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, lte, sql } from 'drizzle-orm';
 import { getBlogDb } from '@/db/client';
 import { EMBEDDING_DIMENSIONS, posts } from '@/db/schema';
 import { pickHeroImage, type HeroImage } from './hero-image';
@@ -214,9 +214,50 @@ function optional(name: string): string | null {
   return process.env[name]?.trim() || null;
 }
 
-/** Deterministic seed rotation: same day → same seed, so a retry doesn't drift. */
-function seedForDay(now: Date): { seed: string; cluster: string } {
-  return SEEDS[Math.floor(now.getTime() / 86_400_000) % SEEDS.length]!;
+/**
+ * Deterministic rotation start: same day → same first seed, so a retry doesn't
+ * drift. The pipeline walks forward from here when a seed's whole keyword
+ * inventory is already covered — after one full 16-day cycle through SEEDS,
+ * "today's" seed usually is.
+ */
+function seedIndexForDay(now: Date): number {
+  return Math.floor(now.getTime() / 86_400_000) % SEEDS.length;
+}
+
+/**
+ * Grammar words that carry no topic signal when deciding whether a keyword is
+ * already answered by a published article. Deliberately short: dropping a
+ * content word like "beneficios" would collapse distinct intents into one.
+ */
+const STOPWORDS = new Set([
+  'a', 'al', 'como', 'con', 'cual', 'cuales', 'de', 'del', 'e', 'el', 'en', 'es',
+  'la', 'las', 'lo', 'los', 'mas', 'mi', 'ni', 'o', 'para', 'por', 'que', 'se',
+  'si', 'sin', 'sobre', 'su', 'tu', 'u', 'un', 'una', 'unas', 'unos', 'y',
+]);
+
+/** The topic-bearing words of a phrase: folded, punctuation-free, minus grammar words. */
+export function topicTokens(text: string): string[] {
+  return fold(text)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter((word) => word.length > 1 && !STOPWORDS.has(word));
+}
+
+/**
+ * True when one of the published titles already answers this keyword: every
+ * topic word of the keyword appears in that single title.
+ *
+ * Token sets, not substrings. The first version compared raw strings, and the
+ * colon in "Ducha fría: beneficios reales…" was enough to hide that title from
+ * the keyword "ducha fría beneficios" — so on 2026-08-15 and -16 the agent
+ * re-chose keywords it had already answered, regenerated the same titles, hit
+ * the same slugs, and the upsert silently rewrote two July articles instead of
+ * publishing new ones. Punctuation must never be load-bearing here.
+ */
+export function coversKeyword(publishedTitleTokens: string[][], keyword: string): boolean {
+  const wanted = topicTokens(keyword);
+  if (!wanted.length) return true; // nothing but glue words — never a target
+  return publishedTitleTokens.some((title) => wanted.every((token) => title.includes(token)));
 }
 
 /**
@@ -298,7 +339,8 @@ export function isRelevant(keyword: string): boolean {
   return ON_TOPIC.some((term) => folded.includes(term));
 }
 
-async function findKeyword(seed: string, covered: string[]): Promise<Keyword> {
+/** Null = every candidate for this seed (the seed itself included) is already covered. */
+async function findKeyword(seed: string, covered: string[][]): Promise<Keyword | null> {
   // keyword_suggestions matches the whole phrase; keyword_ideas matches any single
   // word in it, which in Spanish drags in bathroom-remodelling and swimwear.
   const payload = await dataForSeo<{ tasks?: { result?: { items?: unknown[] }[] }[] }>(
@@ -332,10 +374,14 @@ async function findKeyword(seed: string, covered: string[]): Promise<Keyword> {
     // One URL per intent. A keyword already answered by a published article
     // would produce a near-duplicate that competes with its own predecessor —
     // the single most common way a programmatic blog poisons itself.
-    .filter((item) => !covered.some((title) => title.includes(fold(item.keyword!))))
+    .filter((item) => !coversKeyword(covered, item.keyword!))
     .sort((a, b) => (b.keyword_info?.search_volume ?? 0) - (a.keyword_info?.search_volume ?? 0))[0];
 
   if (!best?.keyword) {
+    // The seed itself is the fallback (e.g. DataForSEO down) — but only while
+    // no published article answers it. A covered seed means this seed has
+    // nothing left to say today; the caller moves on to the next one.
+    if (coversKeyword(covered, seed)) return null;
     console.warn(`No usable keyword after filtering ${items.length} suggestion(s). Using the seed: "${seed}"`);
     return { keyword: seed, volume: 0, difficulty: 0 };
   }
@@ -821,14 +867,29 @@ export type PublishResult = {
 
 export async function publishDailyPost(options: { dryRun?: boolean; now?: Date } = {}): Promise<PublishResult> {
   const now = options.now ?? new Date();
-  const { seed, cluster } = seedForDay(now);
-  console.log(`Seed: "${seed}" · cluster: ${cluster}`);
-
   const priorPosts = await publishedPosts();
-  const keyword = await findKeyword(
-    seed,
-    priorPosts.map((post) => fold(post.title)),
-  );
+  const covered = priorPosts.map((post) => topicTokens(post.title));
+
+  // Walk the seed rotation from today's slot until one yields a keyword no
+  // published article answers. After the first full cycle through SEEDS,
+  // "today's" seed usually has an article already — the walk is what keeps a
+  // second cycle producing new topics instead of overwriting the first.
+  const start = seedIndexForDay(now);
+  let keyword: Keyword | null = null;
+  let seed = '';
+  let cluster = '';
+  for (let offset = 0; offset < SEEDS.length && !keyword; offset++) {
+    ({ seed, cluster } = SEEDS[(start + offset) % SEEDS.length]!);
+    keyword = await findKeyword(seed, covered);
+    if (!keyword) console.log(`Seed "${seed}": every candidate already covered. Trying the next seed.`);
+  }
+  if (!keyword) {
+    throw new Error(
+      `All ${SEEDS.length} seeds are exhausted: every suggested keyword is covered by a published article. ` +
+        'Add seeds or raise the suggestion limit. Nothing was published.',
+    );
+  }
+  console.log(`Seed: "${seed}" · cluster: ${cluster}`);
   console.log(`Target: "${keyword.keyword}" (vol ${keyword.volume}, KD ${keyword.difficulty})`);
 
   const serp = await fetchSerp(keyword.keyword);
@@ -870,6 +931,26 @@ export async function publishDailyPost(options: { dryRun?: boolean; now?: Date }
   console.log(
     `Draft: "${article.title}" · ${wordCount} palabras · ${internalLinks} enlaces · ${article.sourceUrls.length} fuentes · /blog/${slug}`,
   );
+
+  // Backstop behind the coverage filter: if the finished title still lands on
+  // an existing slug, refuse. The upsert below exists so a same-day retry can
+  // repair a partial run — it must never let a later day silently rewrite an
+  // older article, which the reader experiences as "no post today" and the
+  // archive experiences as history quietly changing under a July date.
+  const clash = await getBlogDb()
+    .select({ publishedAt: posts.publishedAt })
+    .from(posts)
+    .where(eq(posts.slug, slug));
+  const sameDayRerun =
+    clash.length > 0 &&
+    clash[0]!.publishedAt !== null &&
+    clash[0]!.publishedAt.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+  if (clash.length && !sameDayRerun) {
+    throw new Error(
+      `Slug "${slug}" already belongs to an article published ${clash[0]!.publishedAt?.toISOString() ?? '(draft)'}. ` +
+        'Refusing to overwrite it. The keyword coverage filter should have caught this — nothing was published.',
+    );
+  }
 
   if (linkPool.length >= 2 && internalLinks < 2) {
     console.warn(`Only ${internalLinks} internal link(s) — the model ignored part of the brief.`);

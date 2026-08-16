@@ -61,6 +61,8 @@ jobs:
           Causas habituales:
           - El guard de claims de salud rechazó los 3 borradores seguidos.
           - La Anthropic API se quedó sin saldo.
+          - El título generado cayó en un slug ya publicado y el guard lo bloqueó (tema repetido).
+          - Los 16 seeds quedaron sin keywords nuevas — hay que ampliar la lista de seeds.
           EOF
           )
           gh issue create --title "Blog diario: sin artículo el $(date -u +%F)" --body "$BODY"

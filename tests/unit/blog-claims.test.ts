@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { assembleMarkdown, isRelevant, prohibitedClaimsIn, type Article } from '@/modules/blog/publish';
+import {
+  assembleMarkdown,
+  coversKeyword,
+  isRelevant,
+  prohibitedClaimsIn,
+  topicTokens,
+  type Article,
+} from '@/modules/blog/publish';
 
 /**
  * Every string below is a real suggestion DataForSEO returned for our own seeds
@@ -92,6 +99,48 @@ describe('prohibitedClaimsIn', () => {
     expect(isRelevant('sauna detox')).toBe(false);
     expect(isRelevant('sauna para bajar de peso')).toBe(false);
     expect(isRelevant('sauna en casa')).toBe(true);
+  });
+});
+
+/**
+ * On 2026-08-15 and -16 the seed rotation wrapped around to its second cycle,
+ * the substring-based coverage check missed two already-answered keywords
+ * because of a colon in the published titles, and the agent silently rewrote
+ * two July articles instead of publishing new ones. These are those two real
+ * collisions, pinned so punctuation can never be load-bearing again.
+ */
+describe('coversKeyword', () => {
+  const published = [
+    'Ducha fría: beneficios reales, temperaturas y tiempos',
+    'Terapia de contraste frío y calor: para qué sirve realmente',
+    'Baño de hielo: beneficios reales, temperaturas y tiempos',
+  ].map(topicTokens);
+
+  it('sees through punctuation — the 2026-08-15/16 regression', () => {
+    expect(coversKeyword(published, 'ducha fría beneficios')).toBe(true);
+    expect(coversKeyword(published, 'terapia de contraste frío y calor para que sirve')).toBe(true);
+  });
+
+  it('matches regardless of accents and word order', () => {
+    expect(coversKeyword(published, 'beneficios ducha fria')).toBe(true);
+  });
+
+  it('covers a bare seed once its pillar article exists', () => {
+    expect(coversKeyword(published, 'ducha fría')).toBe(true);
+  });
+
+  it('lets a genuinely new angle on a covered subject through', () => {
+    expect(coversKeyword(published, 'ducha fría por la noche')).toBe(false);
+    expect(coversKeyword(published, 'baño de hielo después de entrenar')).toBe(false);
+  });
+
+  it('never targets a keyword made only of glue words', () => {
+    expect(coversKeyword([], 'de la para')).toBe(true);
+  });
+
+  it('requires all topic words in one single title, not across several', () => {
+    // "ducha" is in one title, "contraste" in another — that is not coverage.
+    expect(coversKeyword(published, 'ducha de contraste')).toBe(false);
   });
 });
 
